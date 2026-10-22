@@ -1,0 +1,29 @@
+function T_root = vdi2736_root_temperature(T_ambient,mu,P,H_V,k_theta_root,...
+    b_m,z,v,m_mm,R_lambda_G,A_G,ED)
+%VDI2736_ROOT_TEMPERATURE VDI 2736 Blatt 2 Eq. (7), gear-root temperature.
+% b_m is face width [m]; module m_mm [mm]; v [m/s]; P [W];
+% k_theta_root [K*(m/s)^0.75*mm^1.75]; result [deg C].
+validate_inputs(T_ambient,mu,P,H_V,k_theta_root,b_m,z,v,m_mm,...
+    R_lambda_G,A_G,ED);
+T_root = temperature_eq(T_ambient,mu,P,H_V,k_theta_root,b_m,z,v,...
+    m_mm,R_lambda_G,A_G,ED);
+end
+
+function validate_inputs(Ta,mu,P,H,k,b,z,v,m,R,A,ED)
+if any(~isfinite([Ta,mu,P,H,k,b,z,v,m,R,A,ED])) || ...
+        mu < 0 || P < 0 || H < 0 || k < 0 || b <= 0 || z <= 0 || ...
+        v < 0 || m <= 0 || R < 0 || A <= 0 || ED < 0 || ED > 1
+    error('vdi2736_root_temperature: invalid or out-of-range input.');
+end
+end
+
+function T = temperature_eq(Ta,mu,P,H,k,b,z,v,m,R,A,ED)
+if P == 0 || ED == 0
+    T = Ta;
+    return
+end
+if v == 0
+    error('Positive transmitted power requires positive mesh velocity.');
+end
+T = Ta + mu*P*H*(k/(b*1e3*z*(v*m)^0.75) + R/A)*ED^0.64;
+end
