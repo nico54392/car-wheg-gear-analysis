@@ -1,6 +1,6 @@
 # Planetary gear model: assumptions, parameters and results status
 
-Last updated 2026-10-28, after the VDI 2736 Blatt 2 audit. Page numbers are printed pages in
+Last updated 2026-10-30: research-use pass/fail criteria added. VDI 2736 Blatt 2 audit 2026-10-28. Page numbers are printed pages in
 `Engineering Resources\Vdi2736-Blatt 2 - PLASTIC GEAR CRITERIA.pdf` (2014 edition).
 
 ## Results (current main.m)
@@ -19,9 +19,32 @@ Last updated 2026-10-28, after the VDI 2736 Blatt 2 audit. Page numbers are prin
 
 Earlier numbers (30.4 MPa, 40.4 MPa, ~49 °C, and the 77.5 °C ring temperature) are superseded.
 
-**Headline:** root and flank stresses are low. Temperature is fine against the 95 °C HDT screen.
-The thing that actually fails is wear, by about two orders of magnitude, and that rests on a
-provisional k_w (see open items).
+## Pass/fail criteria (research use, set 2026-10-30)
+
+This is a research prototype for short tests, so it's rated on two things:
+
+1. **Static strength at motor stall**, 7.65 N·m on the carrier, 94.4 N per planet (`static_peak_check.m`).
+   - Roots: VDI Eq. 23/24, σ_F,s ≤ 2.0·σ_S/S_Smin with S_Smin = 1.5, σ_S = 48 MPa. Steel planets use σ_y/S_Smin.
+   - Flanks: VDI has no static check. The project screen is Hertz ≤ 1.67·σ_S/S_Smin, i.e. first subsurface yield with the safety factor. MARGINAL means under first yield but inside the factor.
+2. **PA12 temperature during a test** (`thermal_check.m`), at the test operating points with ED = 1.
+   - PASS below Tg = 44 °C (MJF PA12, DSC), CAUTION up to HDT 95 °C, FAIL above. Graded on the flank temperature (VDI Eq. 9).
+   - The whole motor line is also swept and reported as a warning.
+
+Wear and fatigue life are **reference only**, printed with the operating conditions they assume.
+
+| Check | Result | Status |
+|---|---|:-:|
+| Sun root at stall | 40.4 / 64.0 MPa | PASS 1.58× |
+| Ring root at stall | 24.2 / 64.0 MPa | PASS 2.65× |
+| Steel planet roots at stall | 40.4, 36.8 / 136.7 MPa | PASS |
+| Sun-planet flank at stall | 65.7 MPa vs 53.4 screen, 80 first yield | MARGINAL |
+| Planet-ring flank at stall | 41.0 / 53.4 MPa | PASS |
+| Flank / body temp, closed top speed, ED = 1 | 54 / 29 °C | CAUTION |
+| Flank / body temp, open top speed, ED = 1 | 74 / 32 °C | CAUTION |
+| Motor-line envelope | flank over HDT if held at 3–139 carrier rpm for long | warning |
+| **Overall** | | **PASS** (flank marginal at stall, above Tg in tests) |
+
+Reference: wear 15 h to 0.1·m at the nominal points (k_w 284·10⁻⁶, printed PA12 on steel).
 
 ## Calculation flow
 
@@ -88,7 +111,7 @@ ZH (DIN 3990-2 form), (22) and λ_zul = 0.07·m, Table 3 k_θ for plastic/steel,
 | Wheel radius closed / open | 0.060 / 0.1029 m | `main.m` | geometry |
 | Operating point | max steady speed on the motor line | `main.m` | not a stall or peak-torque case |
 | Application factor K_A | 1.25 | `main.m` | VDI p.7 range 1–1.25 for electric motor drives, upper end |
-| Peak loads | not checked | — | VDI §3.3 Eq. (23)/(24) not implemented |
+| Peak load | motor stall, 7.65 N·m on the carrier | `static_peak_check.m` | VDI §3.3 Eq. (23)/(24) |
 
 ### Thermal
 
@@ -116,15 +139,14 @@ ZH (DIN 3990-2 form), (22) and λ_zul = 0.07·m, Table 3 k_θ for plastic/steel,
 
 ## Open items, roughly by impact
 
-1. **Wear life (15 h vs 5475 h target).** Get a k_w for PA12 against steel. Also check l_Fl
-   (2·m approximation) and drop wear results for the steel planets.
+1. **Wear life** is reference only now. k_w checked 2026-10-30: printed PA12 on steel ≈ 300–500·10⁻⁶ (molded ≈ 16).
 2. **VDI strength check.** Implement σ_FP = Y_St·σ_FlimN/S_Fmin (Eq. 13, Y_St = 2,
    S_Fmin 2.0 continuous / 1.6 intermittent) and σ_HP = σ_HlimN·Z_R/S_Hmin (Eq. 17,
    S_Hmin 1.4). Needs PA12 σ_FlimN and σ_HlimN curves at the computed temperature.
 3. **Member-specific YFa/YSa.** Use VDI Fig. 1/2 or a real DIN 3990-3 root-section calc with z and x.
 4. **Planet undercut.** Either raise x_p (closure then needs x_r = x_s + 2x_p) or check the
    generated tooth form.
-5. **Peak load check**, VDI §3.3: σ_F,s ≤ 2.0·σ_S/S_Smin with S_Smin = 1.5.
+5. ~~Peak load check~~ done in `static_peak_check.m`.
 6. **Ring YSa** per VDI 2737.
 7. **Load sharing and tolerances**: replace zero deviations with drawing values; consider K_γ.
 
