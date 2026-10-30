@@ -462,12 +462,17 @@ safety_results_o = gear_safety( ...
     vdi_results_o.lambda_zul, fatigue_data);
 
 % VDI 2736 Blatt 2 average-wear life estimate (Eqs. 19 and 21).
-% Provisional midpoint k_w from microscopy-derived SLS PA12/PA12 dry-gear
-% range 56-512 x 10^-6 mm^3/(N*m), measured at pv=9.2-11.03 MPa*m/s.
+% k_w for printed PA12 against steel, dry. Values in 10^-6 mm^3/(N*m):
+%   16       molded PA12 vs 100Cr6, pin-on-disc, Rz 3.2, 4 MPa, 0.5 m/s
+%            (VDI 2736 Blatt 1 Fig. 5) -> best case, not printed material
+%   320-480  laser-sintered PA12 vs stainless ball, 0.35 m/s
+%            (White Rose eprint 202329, Wear 2023)
+%   56-512   SLS PA12/PA12 gears (Odrobina thesis), 284 = midpoint
+% 284 kept: it sits inside the printed-PA12-on-steel range. Life ~ 1/k_w.
 wear_inputs.k_w_1e6 = 284;
 wear_inputs.k_w_provisional = true;
-wear_inputs.k_w_source = ['Odrobina thesis: midpoint of microscopy-based PA12/PA12 ' ...
-    'SLS dry-gear range (56-512 x 10^-6 mm^3/(N*m))'];
+wear_inputs.k_w_source = ['Printed PA12 on steel: LS PA12 vs stainless 320-480, ' ...
+    'Odrobina SLS gears 56-512 (284 midpoint); molded best case 16 (VDI 2736-1 Fig. 5)'];
 wear_inputs.fraction_closed = 0.50;
 wear_inputs.fraction_open = 0.50;
 wear_inputs.hours_per_day = 3;
