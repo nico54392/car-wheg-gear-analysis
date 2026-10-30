@@ -1,71 +1,42 @@
 GEAR PARAMETER VALUES AND SOURCES
-Project: CAR Gearbox MATLAB model
-Snapshot: values below are from current main.m and directly used helpers. Proposed but inactive geometry is labeled separately.
+Project: CAR wheg planetary gearbox, MATLAB model
+Snapshot of main.m on 2026-10-28. "VDI" = VDI 2736 Blatt 2 (2014), printed pages.
 
-| Parameter | Current value | File / location | Source or status |
+| Parameter | Value | Where | Source / status |
 |---|---:|---|---|
-| Module m | 1 mm | main.m, m=1; gear.mod | Design input; no external source recorded |
-| Sun teeth z_s | 16 | main.m, N_s; gear.N_s | Design input; no external source recorded |
-| Planet teeth z_p | 11 | main.m, N_p; gear.N_p | Design input; no external source recorded |
-| Internal ring teeth z_r | 38 | main.m, N_r1_i; gear.N_r1_i | Design input; no external source recorded |
-| Planet count | 3 | main.m; planetary_gear.m | Architecture input; equal load sharing is assumed |
-| Pressure angle | 20 deg (active) | main.m, gear.alpha | Design input. User-proposed 24.5 deg is not active |
-| Helix angle | 0 deg | main.m, gear.beta | Design input: spur gears |
-| Profile shifts sun/planet/ring | 0 / 0 / 0 (active) | main.m, gear.x_s/x_p/x_r1 | Design inputs. Proposed +0.40/+0.15/+0.70 are not active |
-| Face widths sun/planet/ring | 10 / 10 / 10 mm | main.m, gear.b_s/b_p/b_r1 | Design inputs; no external source recorded |
-| Gear Young's modulus used | 1700 MPa for all three members | main.m, E_XY assigned to gear.E_s/E_p/E_r | Material input; exact PA12 grade/process source not recorded |
-| Declared through-build modulus | 1800 MPa | main.m, E_Z | Declared but not assigned to current gear members |
-| Poisson ratio | 0.47 for all members | main.m, gear.nu_s/nu_p/nu_r1 | Material input; no exact grade/process source recorded |
-| Tensile strength XY / Z | 48 / 48 MPa | main.m, sigma_tensile_XY/Z | Supplied/project material values; exact PA12 grade/process reference needed |
-| Flexural strength XY / Z | 65 / 70 MPa | main.m, sigma_flex_XY/Z | Project material values; no matching source cited in active code |
-| Tangential pitch diameters (derived) | sun 16; planet 11; ring 38 mm | geometry_calc.m from module and tooth counts | Derived reference pitch geometry; not measured outside diameter |
-| Pitch radii (derived) | sun 8; planet 5.5; ring 19 mm | geometry_calc.m | Derived from d/2 |
-| Sun-planet center distance (derived) | 13.5 mm | geometry_calc.m, geom.a | Derived from pitch radii |
-| Planetary closure (derived) | 19 - 8 - 2(5.5) = 0 mm | geometry_calc.m, planetary_error | Kinematic geometry check |
-| Addendum / dedendum used by geometry helper | 1m / 1.25m = 1 / 1.25 mm | geometry_calc.m | Generic unshifted full-depth assumption; not generated tooth profile |
-| Root section geometry used by VDI routine | s_Fn=pi*m/2; h_Fa=1.25m; rho_F=0.38m | vdi2736.m | Simplified common geometry assumptions; not derived from each actual/shifted tooth |
-| Application factor K_A | 1.0 | main.m, gear.K_A | Project assumption; operating shock basis not recorded |
-| Quality grade Q | 9 | main.m, gear.Q | Project input; manufacturing class/source not recorded |
-| Alignment/profile deviations | f_beta=f_alpha=f_sh=f_b=0 | main.m | Idealized inputs; no measured tolerance evidence |
-| PA12/PA12 friction coefficient | 0.40 | main.m, mu_gear | Assumed dry PA/PA pair, attributed in code to supplied VDI 2736 Blatt 2 Table 2; verify exact condition/material row |
-| Root thermal coefficient | 2148 (code units) | main.m, k_theta_root | Existing project value; exact table/row and unit basis need manual confirmation |
-| Flank thermal coefficient | 9000 (code units) | main.m, k_theta_flank | Attributed in code to VDI 2736 Blatt 2 Table 3 dry plastic/plastic; verify exact row/units |
-| Engagement duty ED | 0.25 | main.m | Project operating assumption; mapped to VDI engagement ratio; no measurement/source recorded |
-| Ambient temperature | 25 deg C | main.m | Environment assumption |
-| Housing/air-entry R_lambda_G | 0 | main.m | Open/unrestricted-air assumption; compare with actual enclosure |
-| Heat transfer area A_G | 1 m^2 | main.m | Simplifying input; no physical area source recorded |
-| Wear coefficient k_w | 284 x 10^-6 mm^3/(N m) | main.m; gear_wear.m | Provisional midpoint from microscopy-based PA12/PA12 SLS dry-gear results in Odrobina thesis; not a VDI tabulated value. Thesis PDF: https://phd.mater.uni-mate.hu/409/11/odrobina_miklos_thesis_DOI.pdf. Test PV range cited in code: 9.2-11.03 MPa m/s |
-| Wear mode split | 50% closed / 50% open | main.m | User-selected operating assumption |
-| Wear service schedule | 3 h/day; 365 days/year; 5 years | main.m | User-selected design-life schedule |
-| Wear contact length l_FI | 2m_n unless supplied per member | gear_wear.m | VDI footnote approximation in code; member-specific values not supplied |
-| Wear limit | 0.1-0.2m | gear_wear.m | VDI 2736 Blatt 2 Eq. 21 as encoded |
-| External auxiliary tooth counts | N_r2=38, N_r1_o=50, N_q=50 | main.m | Packaging/layout design inputs; no external source recorded |
-| External auxiliary diameters | D_r2=38, D_r1_o=50, D_q=50 mm | main.m | Derived as tooth count x module; verify whether these are intended reference diameters |
-| PA12 root fatigue screen | 25 MPa coupon stress; 10^7-cycle runout floor, projected below 25 MPa | main.m fatigue_data; gear_safety.m | Provisional lower-bound projection from TA EF037 SLS PA12 tensile dog-bone tests. Not gear-tooth data, not a failure-life prediction, and not temperature-corrected; flank fatigue remains unassessed |
-| Candidate PA12 gear fatigue paper | Not yet supplied/applied | User is locating SLS PA12 gear single-tooth bending fatigue study, DOI 10.1177/14644207221074902 | Pending source and data extraction; no curve or cycles-to-failure inferred |
-| Temperature factor | None applied | pa12_temperature_factor.m | Calibration-only interface; returns unassessed without grade/process/failure-mode-specific calibration |
-| Static comparison references | 65 MPa flexural for root; 48 MPa tensile proxy for flank | main.m; gear_safety.m | Rough static utilization screen only; not temperature-adjusted yield or fatigue allowables |
-
-SOURCE FILES
-- Local standard PDF: C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt - PLASTIC GEAR CRITERIA.pdf
-- Main parameter inputs: C:\Users\nico5\OneDrive\Documents\MATLAB\CAR Gearbox\main.m
-- Shared derived geometry: C:\Users\nico5\OneDrive\Documents\MATLAB\CAR Gearbox\geometry_calc.m
-- Wear coefficient research source: Odrobina thesis PDF URL above.
-- Suggested shifted geometry (24.5 deg; x_s=+0.40, x_p=+0.15, x_r=+0.70) is user-proposed only and must not be mistaken for current model inputs.
-
-PDF SOURCE INDEX (exact filenames and full locations)
-- VDI 2736 Blatt 2, “PLASTIC GEAR CRITERIA.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt 2 - PLASTIC GEAR CRITERIA.pdf. Source for intended Method C and cited VDI equations.
-- DIN equation notes, “DIN 3390 Eqs.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\DIN 3390 Eqs.pdf. MATLAB cites DIN 3990-3; verify this file's actual title/content before asserting it is that source.
-- ISO 6336-2:2006, “GEARS.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\ISO-6336-2-2006  - GEARS.pdf. Source reference for the ZH factor form.
-- VDI 2736 Blatt 1, “Vdi2736-Blatt-1.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt-1.pdf. Present in library; no current Part 2 equation is attributed to it.
-- “PLA Nylon Gear Study.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\PLA Nylon Gear Study.pdf. Candidate polymer-gear reference; not used as PA12 material authority without verification.
-- “TechnicalData_KGSTOCKGEARS.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\TechnicalData_KGSTOCKGEARS.pdf. General technical data, not VDI.
-- Odrobina thesis PDF — no local copy found in checked source folders. Online: https://phd.mater.uni-mate.hu/409/11/odrobina_miklos_thesis_DOI.pdf. Provisional wear coefficient source.
-- SLS PA12 gear single-tooth bending-fatigue study, DOI 10.1177/14644207221074902 — no local PDF found in checked source folders; user is locating it. Not used in current calculations.
-
-FATIGUE SCREEN NOW USED IN CODE
-- TA Instruments EF037, “Tensile and Fatigue Properties of Additively Manufactured Polyamides”; PDF filename: EF037.pdf; source page: https://www.tainstruments.com/applications-notes/tensile-and-fatigue-properties-of-additively-manufactured-polyamides/; direct PDF: https://www.tainstruments.com/pdf/literature/EF037.pdf.
-- Source test: SLS PA12 tensile dog-bone coupons, R=0.1, 25 Hz. All PA12 samples at 25 MPa ran out at 10^7 cycles; failures occurred at 30–40 MPa. Model applies the 25 MPa/10^7 runout as a projected lower bound for root-bending stresses below 25 MPa. It is not an exact fatigue failure life.
-- Current modeled root stresses (about 3–5.4 MPa in the supplied run) are far below tested failure stresses. Current open-case gear temperature (about 88.7 C) is above the coupon test condition; no temperature factor is applied. Treat this only as an optimistic screening placeholder until matched-temperature gear tests exist.
-- Tensile S-N data do not represent flank contact fatigue. That mode remains unassessed; VDI average wear remains the flank life estimate.
-
+| Module m | 1 mm | main.m mod | design |
+| Teeth sun / planet / ring | 16 / 11 / 38 | main.m | design; closure and 3-planet phasing OK |
+| Planets | 3 | main.m | design; equal sharing assumed |
+| Pressure angle | 20 deg | main.m gear.alpha | design |
+| Helix angle | 0 | main.m gear.beta | spur |
+| Profile shift sun / planet / ring | +0.40 / +0.15 / +0.70 | main.m | design; sums 0.55 / 0.55 |
+| Working pressure angle | 24.94 deg | geometry_calc.m | derived |
+| Working centre distance | 13.990 mm | geometry_calc.m | derived (13.5 mm unshifted) |
+| Face width all | 10 mm | main.m | design |
+| Root geometry for YFa/YSa | s_Fn = pi m/2, h_Fa = 1.25 m, rho_F = 0.38 m | vdi2736.m | placeholder, same for every gear |
+| Sun / ring material | HP MJF PA12 | main.m PA12 | provisional datasheet values |
+| PA12 E XY / Z | 1.7 / 1.8 GPa | main.m | XY used; room temperature |
+| PA12 nu | 0.47 | main.m | assumed |
+| PA12 tensile XY / Z | 48 / 48 MPa | main.m | datasheet, confirm grade |
+| PA12 flexural XY / Z | 65 / 70 MPa | main.m | no source cited |
+| PA12 HDT 1.82 / 0.45 MPa | 95 / 175 C | main.m | HP HR PA12 datasheet |
+| Planet material | stainless steel, E 193 GPa, nu 0.30, sigma_y 205 MPa | main.m steel | grade not fixed |
+| K_A | 1.25 | main.m gear.K_A | VDI p.7 upper end for electric motors |
+| K_F, K_H | = K_A | KF.m, KH.m | VDI p.11, p.17 |
+| Quality / deviations | Q 9, all deviations 0 | main.m | idealized |
+| Friction mu | 0.20 | main.m mu_gear | VDI Table 2, dry plastic/steel |
+| k_theta root / flank | 900 / 6300 K (m/s)^0.75 mm^1.75 / W | main.m | VDI Table 3, dry plastic/steel |
+| ED | 0.30 | main.m | assumed engagement fraction |
+| R_lambda_G, A_G | 0, 1 m^2 | main.m | open housing, VDI Table 4 |
+| Ambient | 25 C | main.m | assumption |
+| Vehicle mass | 8 kg | main.m | estimate |
+| Crr / grade | 0.10 / 0 deg | main.m | assumption |
+| Air density / frontal area | 1.225 kg/m^3 / 0.0364 m^2 | main.m | standard / geometry |
+| Drivetrain efficiency | 0.94 | main.m | assumption |
+| Motor | 7.65 N m stall, 170 rpm, 12 V | main.m motor | no datasheet cited |
+| Wheel radius closed / open | 0.060 / 0.1029 m | main.m | geometry |
+| Wear k_w | 284e-6 mm^3/(N m) | main.m wear_inputs | Odrobina, PA12/PA12 midpoint; real pairing is PA12/steel |
+| Wear duty | 50 % closed / 50 % open, 3 h/day, 365 d, 5 yr | main.m | user schedule (5475 h) |
+| Wear limit | 0.1-0.2 m | gear_wear.m | VDI Eq. 21 |
+| Root fatigue screen | 25 MPa runout at 1e7 | main.m fatigue_data | TA EF037 coupons, not gear data |
+| Outer ring / output | N_r2 38, N_r1_o 50, N_q 50 | main.m | packaging, not rated |

@@ -1,41 +1,58 @@
-PLANETARY GEAR MODEL — SUMMARY & ASSUMPTIONS
+CAR WHEG PLANETARY GEARBOX — MATLAB MODEL
+Last updated: 2026-10-28
 
-SUMMARY
-The MATLAB model represents a three-planet planetary gearbox with equal load sharing. It calculates vehicle demand, planetary speeds and torques, per-planet forces, VDI 2736 Method C tooth stresses, and mesh-loss heating. Shared gear geometry is calculated in geometry_calc.m.
+WHAT IT DOES
+3-planet fixed-ring planetary stage, equal load sharing. main.m works out the
+vehicle demand (closed and open wheel), then for each case runs:
+  planetary_gear.m  -> speeds, torques, per-planet mesh forces
+  vdi2736.m         -> VDI 2736 Blatt 2 root stress, flank stress, deformation, H_V
+  gear_temperature.m-> VDI Eq. 7 / 9 root and flank temperatures
+  gear_safety.m     -> static screens + provisional PA12 root runout check
+  gear_wear.m       -> VDI Eq. 19 / 21 average wear life
+Shared geometry (pitch, working angle, shifts, closure) lives in geometry_calc.m.
+Run main.m. Detailed assumptions: gear_model_assumptions_and_results_status.md
 
-Reported maximum wheel-open results:
-  Tooth-root stress: 30.4 MPa
-  Flank pressure:    40.4 MPa
-  Gear temperature:  about 49°C at 25% duty
+CURRENT DESIGN (as coded in main.m)
+  Teeth sun/planet/ring: 16 / 11 / 38, m = 1 mm, b = 10 mm, spur
+  Pressure angle 20 deg; shifts +0.40 / +0.15 / +0.70 -> working angle 24.94 deg, a_w = 13.990 mm
+  Sun and ring: HP MJF PA12. Planets: stainless steel.
+  K_A = 1.25 (KF = KH = K_A per VDI), mu = 0.20, k_theta 900 / 6300, ED = 0.30, open air
 
-These are user-reported values, not yet reproduced from the current code. The current main.m uses 20° pressure angle, zero profile shifts, and 50% engagement duty. The proposed 24.5° and profile shifts (+0.40 sun, +0.15 planet, +0.70 ring) still need to be entered and run. Safety factors against temperature- and life-dependent PA12 properties are intended, but the current main script does not yet run that evaluation.
+CURRENT RESULTS (run 2026-10-28, after the VDI audit fixes)
+                          closed     open
+  Force per planet [N]     6.20     10.69   (at reference diameter)
+  Max root stress [MPa]    3.32      5.72   (sun / planet, sun-planet mesh)
+  Max flank stress [MPa]  18.82     24.71   (sun-planet)
+  Ring flank [MPa]        11.75     15.42
+  Max temperature [C]     38.4      47.8    (sun flank characteristic)
+  Contact ratio sp / rp   1.331 / 1.532
+  Wear life to 0.1 m      15 h, sun governs  <-- far short of the 5475 h target
 
-KEY ASSUMPTIONS AND PARAMETERS
-• Three planets; equal load sharing, so each planet carries one third of total mesh force. Files: main.m, planetary_gear.m, vdi2736.m.
-• Gear teeth: sun 16, planet 11, inner ring 38; module 1 mm; face widths 10 mm. File: main.m.
-• Current geometry: 20° pressure angle, spur gears, zero profile shift. File: main.m. Proposed geometry: 24.5° and shifts +0.40/+0.15/+0.70; not yet in code.
-• Vehicle case: mass 8 kg, rolling resistance 0.10, level road, air density 1.225 kg/m³, drivetrain efficiency 0.94. File: main.m. These are project inputs, not sourced test values.
-• Thermal case: ambient 25°C, friction coefficient 0.50, thermal coefficient 2148, ED=0.50, open-air factor 0, area factor 1. File: main.m. The requested 25% case requires ED=0.25 if duty means VDI's engagement-time fraction.
-• PA12 inputs include tensile strength 48 MPa (XY/Z), flexural strength 65/70 MPa, modulus 1700/1800 MPa, fatigue reference 2 million cycles at 29.4 MPa and R=0.1, and HDT 95°C/175°C at the stated test loads. File: main.m. Exact material grade/process and sources must be confirmed; pa12_temperature_factor.m uses a project-defined temperature multiplier, not a validated fatigue curve.
-• Load factors KF and KH are set to 1.25 in their factor files; main.m uses KA=1. This is an added conservative factor requiring confirmation against the selected VDI simplification.
-• Tooth-root geometry in vdi2736.m currently uses common nominal dimensions for all members; the 11-tooth planet and proposed shifts need tooth-specific geometry and undercut checks.
+Old numbers (30.4 MPa, 40.4 MPa, ~49 C, and the 77.5 C ring) are superseded.
 
-UNDERCUT AND VDI NOTE
-A low tooth count can cause undercut and reduce usable root section. Positive profile shift can improve root thickness, subject to tooth-tip, clearance, interference, contact-ratio, and manufacturing checks. In VDI 2736, ZH is a flank/contact zone factor; it does not model undercut or root fatigue. Root bending uses YFa and YSa with the actual tooth geometry. See the supplied VDI PDF, printed pages 11–16, and the small-tooth-count/high-pressure-angle study linked below.
+FIXES APPLIED IN THE 2026-10-28 VDI AUDIT
+1. Ring tip radius used (1+x_r); now (1-x_r), matching geometry_calc. The old
+   tip sat inside the base circle, so the ring contact ratio came out ~3.35
+   instead of 1.53. That made ring-mesh stresses too low and H_V too high.
+2. Partial contact ratios now use r_b*tan(alpha_wt) per VDI p.22 (was r*sin).
+3. Internal mesh uses (u-1)/u in sigma_H and H_V (DIN 3990 sign convention).
+4. Rating force taken at the reference diameter (VDI Eq. 2/10), not the
+   working diameter. Mesh power still uses working-circle values.
+5. KF/KH now return K_A, per VDI p.11/17. K_A moved to 1.25 in main.m, so
+   the numbers are unchanged; the conservatism is just visible now.
+6. mu set to 0.20 (VDI Table 2, dry plastic/steel). Was an unsourced 0.129.
+7. Added checks: ring tip inside base circle, and eps_alpha outside 1..2 for Eq. 8.
 
-NEXT CHECKS
-1. Enter the proposed pressure angle and profile shifts; validate the actual tooth forms and planetary closure.
-2. Set ED=0.25 if that matches the intended duty definition.
-3. Run the maximum wheel-open case and confirm or revise 30.4 MPa, 40.4 MPa, and ~49°C.
-4. Connect safety calculations to grade-specific PA12 strength-versus-temperature-and-life data.
-5. Audit member-specific root factors and thermal equation inputs against the supplied VDI edition.
-
-RESOURCES
-• VDI 2736 Part 2 (standard scope): https://www.vdi.de/en/home/vdi-standards/details/vdi-2736-blatt-2-thermoplastic-gear-wheels-cylindrical-gears-calculation-of-the-load-carrying-capacity
-• User-supplied VDI PDF: C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt - PLASTIC GEAR CRITERIA.pdf
-• HP PA12 material reference: https://reinvent.hp.com/it-it-3d-digital-parts-manufacturing
-• HP PA12 datasheet copy (HDT conditions): https://info.extolinc.com/hubfs/Downloads/HP%203D%20HR%20PA12%20Material%20Data%20Sheet.pdf
-• Small-tooth-count/high-pressure-angle gear study: https://cir.nii.ac.jp/crid/1390870696563807744
-• PA12 MJF fatigue study: https://www.sciencedirect.com/science/article/abs/pii/S0142112322001815
-
-Detailed report: gear_model_assumptions_and_results_status.md
+STILL OPEN
+- YFa / YSa use one placeholder root geometry for every gear; they ignore
+  tooth count and profile shift. Read the VDI Fig. 1 / 2 values per gear or
+  do a proper DIN 3990-3 root-section calc.
+- Planet at x = 0.15 is below the rack undercut limit (x_min ~ 0.36).
+- Steel planets are outside VDI 2736; rate them with ISO 6336 if it matters.
+- gear_safety compares stress straight to flexural/yield strength. It is not
+  the VDI check: that needs sigma_FP = 2.0*sigma_FlimN/S_Fmin (S_Fmin 2.0)
+  and sigma_HP with S_Hmin 1.4, using PA12 data at the computed temperature.
+- Wear: k_w is a provisional PA12/PA12 value but the actual pairing is
+  PA12/steel. Wear on the steel planet entries is not meaningful.
+- Ring YSa uses the external formula; VDI points to VDI 2737 for internal gears.
+- Equal planet sharing and zero tolerances are idealized.
