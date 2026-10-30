@@ -1,6 +1,7 @@
 function w = thermal_check(gear, geom, T_stall, omega_0, th, crit, test_points)
 %THERMAL_CHECK PA12 temperature for short research tests.
 %
+% Source IDs: VDI2 Eq. 7/9; limits OD20 (Tg), HP-DS (HDT, melt); criteria PROJ.
 % Pass/fail: each test operating point (carrier torque, speed) with the
 % gears running the whole test (ED = 1). VDI Eq. (7)/(9) give the steady
 % temperature, so a short test runs cooler: this is an upper bound.

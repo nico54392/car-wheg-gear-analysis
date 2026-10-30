@@ -1,5 +1,6 @@
 function ZH = ZH(alpha_t, alpha_wt, beta_b)
 %ZH Zone factor used by the VDI 2736 flank-stress equation.
+% Source IDs: ISO6336-2 Eq. 16; VDI2 p.16 fn. 10.
 % The factor equation is the ISO 6336-2:2006 Eq. 16 form, also identified
 % by VDI 2736 Blatt 2 p. 16 as a DIN 3990-derived factor. This is only the
 % zone-factor relation; it does not make the complete rating an ISO rating.

@@ -1,5 +1,5 @@
 function Zepsilon = Zepsilon(epsilon_alpha, epsilon_beta)
-%ZEPSILON Contact-ratio factor for flank/contact stress
+%ZEPSILON Contact-ratio factor for flank/contact stress, VDI2 Eq. 16, p.16
 % according to VDI 2736
 %
 % Inputs:

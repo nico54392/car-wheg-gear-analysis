@@ -86,55 +86,55 @@ ZH (DIN 3990-2 form), (22) and λ_zul = 0.07·m, Table 3 k_θ for plastic/steel,
 
 | Assumption | Value | Where | Basis |
 |---|---|---|---|
-| Planets | 3, equal sharing, no K_γ | `main.m`, `planetary_gear.m` | project assumption; needs stiff carrier and good tolerances |
-| Tooth counts | 16 / 11 / 38 | `main.m` | design; closure 16 + 2·11 = 38, phasing (16+38)/3 = 18 ✓ |
-| Module, face width | 1 mm, 10 mm all | `main.m` | design; b/m = 10 ≤ 12 so K_F ≈ K_A applies |
-| Pressure angle | 20° | `main.m` | design |
-| Profile shifts | +0.40 / +0.15 / +0.70 | `main.m` | x_s + x_p = x_r − x_p = 0.55 → α_w = 24.94°, a_w = 13.990 mm |
-| Helix | β = 0 | `main.m` | spur; helical branches deliberately error |
-| Tip circles | d ± 2m(1 ± x), no tip shortening | `geometry_calc.m`, `vdi2736.m` | nominal; real cutter geometry not modelled |
-| Root geometry for YFa/YSa | s_Fn = πm/2, h_Fa = 1.25m, ρ_F = 0.38m, α_Fan = α_n, all gears | `vdi2736.m` | **placeholder**, ignores z and x. Code gives YFa 3.04, YSa 1.73 for every gear; VDI Fig. 1 for the sun (z 16, x 0.4) is roughly 2.5 |
-| Ring YFa | 2.0 | `vdi2736.m` | VDI p.11 |
-| Ring YSa | external DIN 3990-3 formula | `YSa.m` | approximation; VDI p.13 points to VDI 2737 |
-| Undercut | planet x = 0.15 < x_min ≈ 0.36 | `geometry_calc.m` | screen flags it; real tooth form unchecked |
+| Planets | 3, equal sharing, no K_γ | `main.m`, `planetary_gear.m` | NR-geo (count); sharing is NR-est; needs stiff carrier and good tolerances |
+| Tooth counts | 16 / 11 / 38 | `main.m` | NR-geo; closure 16 + 2·11 = 38, phasing (16+38)/3 = 18 ✓ (KG p.117) |
+| Module, face width | 1 mm, 10 mm all | `main.m` | NR-geo; b/m = 10 ≤ 12 so K_F ≈ K_A applies (VDI2 p.11) |
+| Pressure angle | 20° | `main.m` | NR-geo |
+| Profile shifts | +0.40 / +0.15 / +0.70 | `main.m` | NR-geo; x_s + x_p = x_r − x_p = 0.55 → α_w = 24.94°, a_w = 13.990 mm (KG p.30) |
+| Helix | β = 0 | `main.m` | NR-geo, spur; helical branches deliberately error |
+| Tip circles | d ± 2m(1 ± x), no tip shortening | `geometry_calc.m`, `vdi2736.m` | KG p.11 basic rack, VDI2 p.22; nominal, real cutter not modelled |
+| Root geometry for YFa/YSa | s_Fn = πm/2, h_Fa = 1.25m, ρ_F = 0.38m, α_Fan = α_n, all gears | `vdi2736.m` | **placeholder** from the KG p.11 basic rack, ignores z and x. Code gives YFa 3.04, YSa 1.73 for every gear; VDI2 Fig. 1 for the sun (z 16, x 0.4) is roughly 2.5 |
+| Ring YFa | 2.0 | `vdi2736.m` | VDI2 p.11 |
+| Ring YSa | external DIN 3990-3 formula (DYK Eq. 4) | `YSa.m` | approximation; VDI2 p.13 fn. 6 points to VDI 2737 |
+| Undercut | planet x = 0.15 < x_min ≈ 0.36 | `geometry_calc.m` | KG p.30 limit; real tooth form unchecked |
 
 ### Loads and operating case
 
 | Assumption | Value | Where | Basis |
 |---|---|---|---|
-| Vehicle mass | 8 kg | `main.m` | estimate |
-| Rolling resistance | 0.10 | `main.m` | assumption |
-| Grade | 0° | `main.m` | level ground |
-| Air density, frontal area | 1.225 kg/m³, 0.0364 m² | `main.m` | standard air; area from dimensions |
-| Drivetrain efficiency | 0.94 | `main.m` | assumption (VDI p.21 suggests ~0.8 for dry plastic stages) |
-| Motor | 7.65 N·m stall, 170 rpm no-load, 12 V | `main.m` | motor data, no datasheet cited |
-| Wheel radius closed / open | 0.060 / 0.1029 m | `main.m` | geometry |
-| Operating point | max steady speed on the motor line | `main.m` | not a stall or peak-torque case |
-| Application factor K_A | 1.25 | `main.m` | VDI p.7 range 1–1.25 for electric motor drives, upper end |
-| Peak load | motor stall, 7.65 N·m on the carrier | `static_peak_check.m` | VDI §3.3 Eq. (23)/(24) |
+| Vehicle mass | 8 kg | `main.m` | NR-est |
+| Rolling resistance | 0.10 | `main.m` | NR-est |
+| Grade | 0° | `main.m` | NR-est, level ground |
+| Air density, frontal area | 1.225 kg/m³, 0.0364 m² | `main.m` | USSA76; area from body dims NR-cad |
+| Drivetrain efficiency | 0.94 | `main.m` | NR-est (VDI2 p.21 suggests ~0.8 for dry plastic stages) |
+| Motor | 7.65 N·m stall, 170 rpm no-load, 12 V | `main.m` | NR-motor; model number still to record |
+| Wheel radius closed / open | 0.060 / 0.1029 m | `main.m` | NR-cad |
+| Operating point (reference) | max steady speed on the motor line | `main.m` | NR-motor line + NR-est vehicle; not a stall case |
+| Application factor K_A | 1.25 | `main.m` | VDI2 p.7 range 1–1.25 for electric motor drives, upper end |
+| Peak load | motor stall, 7.65 N·m on the carrier | `static_peak_check.m` | PROJ, value NR-motor; VDI2 §3.3 Eq. 23/24 |
 
 ### Thermal
 
 | Assumption | Value | Where | Basis |
 |---|---|---|---|
-| Ambient | 25 °C | `main.m` | assumption |
-| μ | 0.20 | `main.m` | VDI Table 2, dry plastic/steel |
-| k_θ,Fuß / k_θ,Fla | 900 / 6300 | `main.m` | VDI Table 3, dry plastic/steel |
-| ED | 0.30 | `main.m` | assumed engagement fraction over 10 min (VDI p.9 definition) |
-| Housing | R_λ,G = 0, A_G = 1 | `main.m` | open, unimpeded air (Table 4); A_G irrelevant when R = 0 |
-| Power in Eq. 7/9 | carrier-frame mesh power | `vdi2736.m` | rolling power is what drives mesh loss in a planetary |
+| Ambient | 25 °C | `main.m` | NR-est |
+| μ | 0.20 | `main.m` | VDI2 Table 2, dry plastic/steel (VDI1 Fig. 5: ~0.27) |
+| k_θ,Fuß / k_θ,Fla | 900 / 6300 | `main.m` | VDI2 Table 3, plastic/steel |
+| ED | 0.30 (reference) / 1.0 (test check) | `main.m`, `thermal_check.m` | NR-est / PROJ; VDI2 p.9 definition |
+| Housing | R_λ,G = 0, A_G = 1 | `main.m` | VDI2 Table 4, open; A_G placeholder, irrelevant when R = 0 |
+| Power in Eq. 7/9 | carrier-frame mesh power | `vdi2736.m` | VDI2 Eq. 7/9 with carrier-frame power (project choice): rolling power drives mesh loss |
 | Member mapping | sun/ring: 3 meshes' power; planet: 1 mesh | `gear_temperature.m` | project extension of the single-pair equation |
 
 ### Material and allowables
 
 | Assumption | Value | Where | Basis |
 |---|---|---|---|
-| Sun, ring | HP MJF PA12, E 1.7 GPa (XY), ν 0.47 | `main.m` | provisional, room-temperature E (VDI wants E at gear temperature) |
-| Planets | stainless steel, E 193 GPa, σ_y 205 MPa | `main.m` | grade not fixed; outside VDI 2736 scope |
-| Static references | flexural 65 MPa (root); tensile 48 MPa kept as metadata | `gear_safety.m` | screening only, no safety factor |
-| Root fatigue | 25 MPa runout at 10⁷ cycles | `main.m` | TA EF037 SLS PA12 coupons, not gear data, no temperature correction |
-| Flank fatigue | none | — | no σ_HlimN for PA12 |
-| Wear coefficient | 284·10⁻⁶ mm³/(N·m) | `main.m` | Odrobina thesis, PA12/PA12 SLS midpoint; real pairing is PA12/steel |
+| Sun, ring | HP MJF PA12, E 1.7 GPa XY (HP-TFS; HP-DS says 1.8), ν 0.47 (NR-est; measured 0.40, FAES) | `main.m` | room-temperature E (VDI wants E at gear temperature) |
+| Planets | stainless steel, E 193 GPa, σ_y 205 MPa | `main.m` | 304 assumed, TN304; grade not confirmed; outside VDI 2736 scope |
+| Static references | flexural 65 MPa (root); tensile 48 MPa | `gear_safety.m` | HP-DS; screening only, no safety factor |
+| Root fatigue | 25 MPa runout at 10⁷ cycles | `main.m` | TA (EF037) SLS PA12 coupons, not gear data, no temperature correction |
+| Flank fatigue | none | — | VDI2 Fig. 6 has no PA12 / dry curve |
+| Wear coefficient | 284·10⁻⁶ mm³/(N·m) | `main.m` | ODR midpoint; printed PA12 on steel 320–480 (NAR23), molded 16 (VDI1) |
 | Temperature derating | none | `pa12_temperature_factor.m` | interface only, returns NaN without calibration |
 
 ## Open items, roughly by impact
@@ -152,12 +152,4 @@ ZH (DIN 3990-2 form), (22) and λ_zul = 0.07·m, Table 3 k_θ for plastic/steel,
 
 ## References
 
-1. VDI 2736 Blatt 2 (2014), *Thermoplastic gear wheels, cylindrical gears, calculation of the
-   load-carrying capacity*. Local: `Engineering Resources\Vdi2736-Blatt 2 - PLASTIC GEAR CRITERIA.pdf`.
-   [VDI page](https://www.vdi.de/en/home/vdi-standards/details/vdi-2736-blatt-2-thermoplastic-gear-wheels-cylindrical-gears-calculation-of-the-load-carrying-capacity)
-2. VDI 2736 Blatt 1, materials and design. Local: `Engineering Resources\Vdi2736-Blatt-1.pdf`.
-3. ISO 6336-2:2006 (ZH form). Local: `Engineering Resources\ISO-6336-2-2006  - GEARS.pdf`.
-4. HP 3D HR PA12 datasheet (HDT values): [datasheet copy](https://info.extolinc.com/hubfs/Downloads/HP%203D%20HR%20PA12%20Material%20Data%20Sheet.pdf)
-5. TA Instruments EF037, PA12 tensile fatigue: [PDF](https://www.tainstruments.com/pdf/literature/EF037.pdf)
-6. Odrobina thesis (k_w): [PDF](https://phd.mater.uni-mate.hu/409/11/odrobina_miklos_thesis_DOI.pdf)
-7. JSME, high-pressure-angle gears with few teeth: [link](https://cir.nii.ac.jp/crid/1390870696563807744)
+Every source ID used above (NR-geo, VDI2, KG, HP-DS, OD20, ...) has its full citation and link in `info/Gear_Parameter_Values_and_Sources.txt`, which matches the Obsidian note "06 - Sources". NR-* entries are N. Ramos: gear design, robot CAD, motor data, and project estimates.

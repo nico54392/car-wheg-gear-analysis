@@ -51,7 +51,7 @@ geom.d_s = 2*geom.r_s;
 geom.d_p = 2*geom.r_p;
 geom.d_r = 2*geom.r_r;
 geom.a = geom.r_s + geom.r_p;
-geom.planetary_error = geom.r_r - geom.r_s - 2*geom.r_p;
+geom.planetary_error = geom.r_r - geom.r_s - 2*geom.r_p;   % closure z_r = z_s + 2z_p, KG p.117
 geom.r_s_m = geom.r_s*1e-3;
 geom.r_p_m = geom.r_p*1e-3;
 geom.r_r_m = geom.r_r*1e-3;
@@ -60,7 +60,7 @@ geom.d_p_m = geom.d_p*1e-3;
 geom.d_r_m = geom.d_r*1e-3;
 geom.a_m = geom.a*1e-3;
 
-% Working pressure angles from involute compatibility. The external-mesh
+% Working pressure angles from involute compatibility (KG p.30, VDI2 p.22). The external-mesh
 % shift sum is x_s+x_p; the internal-mesh sum is x_r-x_p. These equations
 % are pressure-angle dependent and do not assume a particular standard angle.
 inv_alpha_t = tan(alpha_t)-alpha_t;
@@ -88,6 +88,7 @@ geom.profile_shift_sum_sp = shift_sum_sp;
 geom.profile_shift_sum_rp = shift_sum_rp;
 
 % Ideal full-depth rack undercut screening for external gears only.
+% x_min = 1 - z*sin(alpha)^2/2, i.e. (17 - z)/17 at 20 deg (KG p.30).
 geom.x_min_undercut_s = 1-p.N_s*sin(alpha_n)^2/2;
 geom.x_min_undercut_p = 1-p.N_p*sin(alpha_n)^2/2;
 geom.sun_undercut_shift_margin = x_s-geom.x_min_undercut_s;
@@ -97,7 +98,8 @@ geom.planet_undercut_screen_pass = geom.planet_undercut_shift_margin >= 0;
 geom.external_undercut_screen_pass = ...
     geom.sun_undercut_screen_pass && geom.planet_undercut_screen_pass;
 
-% Full-depth basic-rack addenda/dedenda with standard profile-shift signs.
+% Full-depth basic-rack addenda/dedenda with standard profile-shift signs
+% (basic rack h_aP = 1.0m, h_fP = 1.25m, KG p.11).
 % External: ha=(1+x)m, hf=(1.25-x)m. Internal: ha=(1-x)m,
 % hf=(1.25+x)m. These nominal circles do not model a specific cutter tip.
 geom.addendum_s = m*(1+x_s);
@@ -147,7 +149,7 @@ if isfield(p,'N_p_planets')
     if p.N_p_planets < 1 || p.N_p_planets ~= floor(p.N_p_planets)
         error('p.N_p_planets must be a positive integer.');
     end
-    geom.valid_planet_phasing = mod(p.N_s + N_r,p.N_p_planets) == 0;
+    geom.valid_planet_phasing = mod(p.N_s + N_r,p.N_p_planets) == 0;   % KG p.117
 else
     geom.N_p_planets = NaN;
     geom.valid_planet_phasing = NaN;

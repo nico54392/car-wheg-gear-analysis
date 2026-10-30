@@ -183,13 +183,13 @@ u_rp = N_r / N_p;
 %          BASIC TOOTH GEOMETRY
 % ========================================
 
-alpha_t = atan(tan(alpha_n) / cos(beta));
+alpha_t = atan(tan(alpha_n) / cos(beta));   % VDI2 p.21
 
 r_s = geom.r_s_m;
 r_p = geom.r_p_m;
 r_r = geom.r_r_m;
 
-r_bs = r_s * cos(alpha_t);
+r_bs = r_s * cos(alpha_t);                   % d_b = d*cos(alpha_t), VDI2 p.21
 r_bp = r_p * cos(alpha_t);
 r_br = r_r * cos(alpha_t);
 
@@ -237,7 +237,7 @@ if abs(arg_wt_sp) > 1+1e-10
     error('Sun-planet working pressure-angle geometry is impossible.');
 end
 alpha_wt_sp = acos(max(-1,min(1,arg_wt_sp)));
-pb_t = pi*m_n*cos(alpha_t);
+pb_t = pi*m_n*cos(alpha_t);                  % base pitch
 A_s = sqrt(max(r_as^2-r_bs^2,0));
 A_p = sqrt(max(r_ap^2-r_bp^2,0));
 % VDI 2736-2 p.22: eps_i = z_i/(2*pi)*(sqrt((d_a/d_b)^2-1) - tan(alpha_wt))
@@ -290,8 +290,11 @@ end
 % ========================================
 
 % These quantities are passed to the factor functions.
-% The factor functions themselves are responsible for
-% implementing the applicable VDI equations.
+% PLACEHOLDER: one critical section for every gear, taken from the
+% standard basic rack (KG p.11, Table 3): tooth thickness pi*m/2 at the
+% reference line, dedendum h_fP = 1.25m, tip radius rho_fP = 0.38m.
+% Not tooth-count or shift specific; see VDI2 Fig. 1/2 for real values.
+% Source IDs (VDI2, KG, DYK, ...) are listed in info/Gear_Parameter_Values_and_Sources.txt.
 
 s_Fn_s = pi*m_n/2;
 s_Fn_p = pi*m_n/2;
@@ -388,7 +391,7 @@ YSa_p_rp = YSa( ...
 
 % Ring tooth
 
-% VDI 2736 Blatt 2, p. 11: approximate internal-ring tooth-form factor.
+% VDI2 p.11: approximate internal-ring tooth-form factor.
 YFa_r_rp = 2.0;
 
 [YSa_r_rp, YSa_r_method] = YSa( ...
@@ -480,6 +483,7 @@ sigma_H_rp = ...
 % If this coefficient is part of the factor-function
 % audit, it can be replaced independently.
 
+% VDI2 Eq. 22, p.20
 lambda_sp = ...
     7.5 * F_t_sp/(b_sp*cos(beta)) * ...
     (1/E_s + 1/E_p);
@@ -539,6 +543,7 @@ z2_rp = N_r;
 epsilon_sp = epsilon_alpha_sp;
 epsilon_rp = epsilon_alpha_rp;
 
+% VDI2 Eq. 8, p.10 (sign for internal mesh per DIN 3990 convention)
 H_V_sp = ...
     pi*(u_sp + 1) / ...
     (z2_sp*cos(beta)) * ...
@@ -787,7 +792,7 @@ vdi_results.sigma_H_rp = sigma_H_rp;
 
 vdi_results.lambda_sp = lambda_sp;
 vdi_results.lambda_rp = lambda_rp;
-vdi_results.lambda_zul = 0.07*m_n; % VDI 2736 Blatt 2, p. 20 guidance
+vdi_results.lambda_zul = 0.07*m_n; % VDI2 p.20 guide value
 
 vdi_results.P_in = P_in;
 vdi_results.P_out = P_out;

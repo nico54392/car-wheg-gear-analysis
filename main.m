@@ -3,10 +3,15 @@
 % This is a research prototype for short lab tests. The pass/fail checks are:
 %   1. Static strength at the largest torque the motor can apply (stall),
 %      VDI 2736-2 Section 3.3           -> static_peak_check.m
-%   2. PA12 temperature, hottest point on the whole motor line with the
-%      gears running the entire test   -> thermal_worst_case.m
+%   2. PA12 temperature at the test operating points with the gears
+%      running the entire test         -> thermal_check.m
 % Wear and fatigue life are reported for reference only, together with
 % the operating conditions they assume.
+%
+% SOURCES: every value below carries a source ID in its comment, e.g.
+% "VDI2 Tab. 2" or "NR-geo". Full citations and links for each ID:
+% info/Gear_Parameter_Values_and_Sources.txt (same list as the Obsidian
+% note "06 - Sources"). NR-* = N. Ramos (design, CAD, motor, estimates).
 
 close all;
 clc;
@@ -17,24 +22,25 @@ clear;
 %          OPERATING CONDITIONS
 % ========================================
 
-m_vcl = 8;                              % [kg]
-Crr = 0.1;                              % [-]
-theta = 0 * (pi/180);                    % [rad]
-rho_air = 1.225;                         % [kg/m^3]
+m_vcl = 8;                              % [kg], NR-est
+Crr = 0.1;                              % [-], NR-est
+theta = 0 * (pi/180);                    % [rad], NR-est (level ground)
+rho_air = 1.225;                         % [kg/m^3], USSA76 sea level
+g = 9.81;                                % [m/s^2], GN (9.80665 rounded)
 
 A_vcl = ...
     0.07*0.24 + ...
-    0.14*0.07*2;                         % [m^2]
+    0.14*0.07*2;                         % [m^2], body dims NR-cad
 
-nu_drvtr = 0.94;                         % [-]
+nu_drvtr = 0.94;                         % [-], NR-est (VDI2 p.21 suggests ~0.8 dry plastic)
 
 % Motor operating limit
-motor.voltage_nominal = 12;       % [V]
-motor.voltage_fraction = 1.0;    % [-] 80% voltage command
+motor.voltage_nominal = 12;       % [V], NR-motor
+motor.voltage_fraction = 1.0;    % [-], full voltage, NR-est
 
 % Motor torque-speed limits at nominal voltage
-motor.T_stall_nominal = 7.65;     % [N*m]
-motor.omega_0_nominal = 170*2*pi/60; % [rad/s]
+motor.T_stall_nominal = 7.65;     % [N*m], 78 kg*cm, NR-motor
+motor.omega_0_nominal = 170*2*pi/60; % [rad/s], 170 rpm no-load, NR-motor
 
 % Effective limits at commanded voltage
 motor.voltage = motor.voltage_fraction * motor.voltage_nominal;
@@ -47,35 +53,35 @@ omega_0 = motor.voltage_fraction * motor.omega_0_nominal;
 
 % Wheel closed
 
-r_wheel_c = 0.06;                        % [m]
+r_wheel_c = 0.06;                        % [m], NR-cad
 
 % Wheel open
 
-r_wheel_o = 0.1029;                      % [m]
+r_wheel_o = 0.1029;                      % [m], NR-cad
 
 
 %% ========================================
 %          GEAR PARAMETERS
 % ========================================
 
-T_q = 0;                                 % [N*m]
-omega_q = 0;                             % [rad/s]
+T_q = 0;                                 % [N*m], auxiliary input idle, NR-est
+omega_q = 0;                             % [rad/s], auxiliary input idle, NR-est
 
-mod = 1;                                 % [mm]
+mod = 1;                                 % [mm], NR-geo
 
-N_p = 11;
-N_s = 16;
-N_r1_i = 38;
+N_p = 11;                                % NR-geo
+N_s = 16;                                % NR-geo
+N_r1_i = 38;                             % NR-geo
 
-N_r2 = 38;
-N_r1_o = 50;
-N_q = 50;
+N_r2 = 38;                               % NR-geo
+N_r1_o = 50;                             % NR-geo
+N_q = 50;                                % NR-geo
 
 D_r2 = N_r2*mod;                         % [mm]
 D_r1_o = N_r1_o*mod;                     % [mm]
 D_q = N_q*mod;                           % [mm]
 
-N_p_planets = 3;
+N_p_planets = 3;                         % NR-geo
 
 
 
@@ -83,27 +89,30 @@ N_p_planets = 3;
 %          MATERIAL / STATIC STRENGTH
 % ========================================
 
-T_ambient = 25;  % [deg C]
+T_ambient = 25;  % [deg C], NR-est
 
 %% MATERIAL PROPERTIES
 
 % ============================================================
 % PA12 - HP High Reusability PA12, MJF
-% Provisional values; verify against the exact material datasheet.
+% HP-DS = HP datasheet 4AA6-4895ENA (2018); HP-TFS = HP extended fact
+% sheet 4AA7-1534EEW (2017, balanced mode). Typical values, not spec.
 % ============================================================
 
-PA12.E_XY = 1.7e9;                 % Young's modulus, XY plane [Pa]
-PA12.E_Z  = 1.8e9;                 % Young's modulus, Z direction [Pa]
-PA12.nu   = 0.47;                  % Poisson's ratio [-]
+PA12.E_XY = 1.7e9;                 % Young's modulus, XY [Pa], HP-TFS (HP-DS says 1800)
+PA12.E_Z  = 1.8e9;                 % Young's modulus, Z [Pa], HP-TFS / HP-DS
+PA12.nu   = 0.47;                  % Poisson's ratio [-], NR-est, no source;
+                                   % measured LS PA12 = 0.40 (FAES). 0.47 is ~4% conservative on sigma_H.
 
-PA12.tensile_strength_XY = 48e6;   % Tensile strength, XY [Pa]
-PA12.tensile_strength_Z  = 48e6;   % Tensile strength, Z [Pa]
+PA12.tensile_strength_XY = 48e6;   % Tensile strength, XY [Pa], HP-DS (ASTM D638)
+PA12.tensile_strength_Z  = 48e6;   % Tensile strength, Z [Pa], HP-DS
 
-PA12.flexural_strength_XY = 65e6;  % Flexural strength, XY [Pa]
-PA12.flexural_strength_Z  = 70e6;  % Flexural strength, Z [Pa]
+PA12.flexural_strength_XY = 65e6;  % Flexural strength @5%, XY [Pa], HP-DS (ASTM D790)
+PA12.flexural_strength_Z  = 70e6;  % Flexural strength @5%, Z [Pa], HP-DS
 
-PA12.HDT_182 = 95;                 % Heat deflection temperature at 1.82 MPa [°C]
-PA12.HDT_045 = 175;                % Heat deflection temperature at 0.45 MPa [°C]
+PA12.HDT_182 = 95;                 % HDT at 1.82 MPa [°C], HP-DS (ASTM D648);
+                                   % HP-TFS also lists 80 C for XY in a second table
+PA12.HDT_045 = 175;                % HDT at 0.45 MPa [°C], HP-DS
 
 % Select the effective modulus for the current gear orientation.
 % This assumes XY properties for the current preliminary model.
@@ -119,34 +128,34 @@ PA12.tensile_strength = PA12.tensile_strength_XY;
 
 % Static strength for the peak-load check. MJF PA12 fails ductile without a
 % clear yield point, so tensile strength stands in for sigma_S.
-% (MJF PA12 X/Y/Z 47/48/49 MPa, UCD MJF PA12 vs PA12-GB study.)
+% (HP-DS 48 MPa; OD20 measured MJF PA12 47/48/49 MPa X/Y/Z, Table 6.)
 PA12.sigma_S = PA12.tensile_strength_XY;  % [Pa], at 23 C
 
 % Temperature limits for short tests
-PA12.Tg = 44;          % [deg C] glass transition, DSC, MJF PA12 (UCD study).
+PA12.Tg = 44;          % [deg C] glass transition, DSC, MJF PA12, OD20 Table 5.
                        % Above this, stiffness and strength drop noticeably.
-PA12.T_melt = 187;     % [deg C] HP 3D HR PA12 datasheet
+PA12.T_melt = 187;     % [deg C] powder melting point, HP-DS (ASTM D3418)
 
 
 % ============================================================
 % STAINLESS STEEL - PLANETS
-% Fill in strength properties once the exact grade is known.
+% Values are 304 stainless (TN304). Grade not confirmed yet.
 % ============================================================
 
-steel.E = 193e9;                   % Approximate Young's modulus [Pa]
-steel.nu = 0.30;                   % Approximate Poisson's ratio [-]
+steel.E = 193e9;                   % Young's modulus [Pa], TN304 (193-200 GPa)
+steel.nu = 0.30;                   % Poisson's ratio [-], NR-est; 304 = 0.28 (MIF304)
 
-steel.sigma_y = 205e6;               % Yield strength [Pa] - FILL IN
-steel.sigma_u = 515e6;               % Ultimate tensile strength [Pa] - FILL IN
+steel.sigma_y = 205e6;               % Yield strength [Pa], TN304
+steel.sigma_u = 515e6;               % Ultimate tensile strength [Pa], TN304
 steel.sigma_F = NaN;               % Allowable tooth-root bending stress [Pa]
                                    % FILL IN if a justified value is available
 
 % Optional: record the grade once identified.
-steel.grade = 'FILL IN';
+steel.grade = '304 assumed (TN304) - confirm';
 
 
 
-% Provisional PA12 fatigue screening data from TA Instruments EF037.
+% Provisional PA12 fatigue screening data, TA (TA Instruments EF037).
 % All PA12 tensile coupons ran out at 25 MPa through 1e7 cycles. Project
 % this only as a lower-bound root-fatigue screen. It is room-temperature
 % tensile-coupon data, not gear-tooth data; no temperature correction exists.
@@ -154,34 +163,35 @@ steel.grade = 'FILL IN';
 fatigue_data.runout_stress_Pa = 25e6;
 fatigue_data.runout_cycles = 1e7;
 
-T_HDT_1p82 = 95;                          % [deg C]
-T_HDT_0p45 = 175;                         % [deg C]
+T_HDT_1p82 = 95;                          % [deg C], HP-DS
+T_HDT_0p45 = 175;                         % [deg C], HP-DS
 
 
 %% ========================================
 %          THERMAL PARAMETERS
 % ========================================
 
-mu_gear = 0.20;                          % [-], VDI 2736-2 Table 2, dry plastic/steel (PA12 sun & ring vs steel planets)
-k_theta_root = 900;                      % [K*(m/s)^0.75*mm^1.75], VDI Table 3 dry plastic/steel
-k_theta_flank = 6300;                    % [K*(m/s)^0.75*mm^1.75], VDI Table 3 dry plastic/steel
+mu_gear = 0.20;                          % [-], VDI2 Tab. 2 p.10, dry plastic/steel
+                                         % (VDI1 Fig. 5 pin-on-disc PA12/100Cr6 ~0.27)
+k_theta_root = 900;                      % [K*(m/s)^0.75*mm^1.75], VDI2 Tab. 3 p.10, plastic/steel
+k_theta_flank = 6300;                    % [K*(m/s)^0.75*mm^1.75], VDI2 Tab. 3 p.10, plastic/steel
 
-ED = .3;                               % [-], assumed relative engagement/duty fraction
+ED = .3;                               % [-], NR-est; engagement fraction per VDI2 p.9 (reference cases only)
 
-R_lambda_G = 0;                          % [K*m^2/W]
+R_lambda_G = 0;                          % [K*m^2/W], VDI2 Tab. 4 p.11, open housing
 
-A_G = 1;                                 % [m^2]
+A_G = 1;                                 % [m^2], placeholder; no effect while R_lambda_G = 0
 
 
 %% ========================================
 %          RESEARCH-USE PASS/FAIL CRITERIA
 % ========================================
 
-crit.S_Smin = 1.5;                       % VDI 2736-2 Eq. (24), against yield
+crit.S_Smin = 1.5;                       % VDI2 Eq. 24 p.20, against yield
 crit.sigma_S_PA12 = PA12.sigma_S;        % [Pa]
 crit.sigma_y_steel = steel.sigma_y;      % [Pa]
-crit.T_soft = PA12.Tg;                   % [deg C] PASS below, CAUTION above
-crit.T_limit = PA12.HDT_182;             % [deg C] FAIL above (HDT 1.82 MPa)
+crit.T_soft = PA12.Tg;                   % [deg C] PASS below, CAUTION above (PROJ)
+crit.T_limit = PA12.HDT_182;             % [deg C] FAIL above, HDT 1.82 MPa (PROJ)
 crit.T_melt = PA12.T_melt;               % [deg C] reported only
 
 
@@ -190,15 +200,15 @@ crit.T_melt = PA12.T_melt;               % [deg C] reported only
 % ========================================
 
 gear.mod = mod;
-gear.alpha = 20*pi/180;                 % [rad], normal reference pressure angle; match CAD
-gear.beta = 0;
+gear.alpha = 20*pi/180;                 % [rad], normal pressure angle, NR-geo
+gear.beta = 0;                          % [rad], spur, NR-geo
 
 gear.N_p_planets = N_p_planets;
 
 
 % Planet
 gear.N_p = N_p;
-gear.x_p = 0.15;                        % [module], positive profile shift
+gear.x_p = 0.15;                        % [module], profile shift, NR-geo
 gear.E_p = steel.E;
 gear.nu_p = steel.nu;
 gear.sigma_y_p_Pa = steel.sigma_y;
@@ -206,23 +216,23 @@ gear.sigma_y_p_Pa = steel.sigma_y;
 
 % Sun
 gear.N_s = N_s;
-gear.x_s = 0.40;                        % [module], x_s+x_p=0.55
+gear.x_s = 0.40;                        % [module], x_s+x_p=0.55, NR-geo
 gear.E_s = PA12.E;
 gear.nu_s = PA12.nu;
 gear.sigma_F_s_PA12_Pa = PA12.flexural_strength_XY;
-gear.b_s = 10;  % [mm] Sun face width
-gear.b_p = 10;  % [mm] Planet face width
+gear.b_s = 10;  % [mm] Sun face width, NR-geo
+gear.b_p = 10;  % [mm] Planet face width, NR-geo
 
 
 % Inner ring
 
 gear.N_r1_i = N_r1_i;
-gear.b_r1 = 10;                          % [mm]
-gear.x_r1 = 0.70;                       % [module], x_r-x_p=0.55
+gear.b_r1 = 10;                          % [mm], NR-geo
+gear.x_r1 = 0.70;                       % [module], x_r-x_p=0.55, NR-geo
 gear.E_r = PA12.E;
 gear.nu_r1 = PA12.nu;
 gear.sigma_F_r_PA12_Pa = PA12.flexural_strength_XY;
-gear.b_r1 = 10; % [mm] Inner-ring face width
+gear.b_r1 = 10; % [mm] Inner-ring face width, NR-geo
 
 
 % Other gears
@@ -239,22 +249,22 @@ gear.D_q = D_q;
 
 % Gear operating parameters
 
-gear.K_A = 1.25;                         % [-], VDI 2736-2 p.7: K_A ~ 1...1.25 for electric-motor drives.
+gear.K_A = 1.25;                         % [-], VDI2 p.7: K_A ~ 1...1.25 for electric-motor drives.
                                          % Upper end kept for conservatism. KF/KH return K_A (VDI p.11/17, b/m<=12).
-gear.Q = 9;
+gear.Q = 9;                              % NR-est (not used in the rating)
 
 
 % Manufacturing / alignment parameters
 
-gear.f_beta = 0;
-gear.f_alpha = 0;
-
-gear.f_sh = 0;
-gear.f_b = 0;
+gear.f_beta = 0;                         % NR-est, idealized (not used in the rating)
+gear.f_alpha = 0;                        % NR-est
+gear.f_sh = 0;                           % NR-est
+gear.f_b = 0;                            % NR-est
 
 % Dimensional tolerance inputs for the mesh backlash/interference screen.
 % Enter +/- half-widths in mm from part drawings or measured parts.
 % Nominal backlash defaults to zero until an intentional value is specified.
+% All zero for now: NR-est.
 gear_tol.sun_tooth_thickness_mm = 0;     % [mm], +/- circumferential thickness
 gear_tol.planet_tooth_thickness_mm = 0;  % [mm], +/- circumferential thickness
 gear_tol.ring_tooth_thickness_mm = 0;    % [mm], +/- circumferential thickness
@@ -323,10 +333,10 @@ F_trac_c = @(v) ...
     (1 - v/(omega_0*r_wheel_c));
 
 F_grade_c = ...
-    m_vcl*9.81*sin(theta);
+    m_vcl*g*sin(theta);
 
 F_rr_c = ...
-    Crr*m_vcl*9.81*cos(theta);
+    Crr*m_vcl*g*cos(theta);
 
 F_drag_c = @(v) ...
     0.5*rho_air*A_vcl*v.^2;
@@ -351,10 +361,10 @@ F_trac_o = @(v) ...
     (1 - v/(omega_0*r_wheel_o));
 
 F_grade_o = ...
-    m_vcl*9.81*sin(theta);
+    m_vcl*g*sin(theta);
 
 F_rr_o = ...
-    Crr*m_vcl*9.81*cos(theta);
+    Crr*m_vcl*g*cos(theta);
 
 F_drag_o = @(v) ...
     0.5*rho_air*A_vcl*v.^2;
@@ -494,22 +504,22 @@ safety_results_o = gear_safety( ...
     vdi_results_o.lambda_zul, fatigue_data);
 
 % VDI 2736 Blatt 2 average-wear life estimate (Eqs. 19 and 21).
-% k_w for printed PA12 against steel, dry. Values in 10^-6 mm^3/(N*m):
+% k_w for printed PA12 against steel, dry (VDI2 Eq. 19). 10^-6 mm^3/(N*m):
 %   16       molded PA12 vs 100Cr6, pin-on-disc, Rz 3.2, 4 MPa, 0.5 m/s
-%            (VDI 2736 Blatt 1 Fig. 5) -> best case, not printed material
+%            (VDI1 Fig. 5 p.19) -> best case, not printed material
 %   320-480  laser-sintered PA12 vs stainless ball, 0.35 m/s
-%            (White Rose eprint 202329, Wear 2023)
-%   56-512   SLS PA12/PA12 gears (Odrobina thesis), 284 = midpoint
+%            (NAR23, Table 5)
+%   56-512   SLS PA12/PA12 gears (ODR), 284 = midpoint
 % 284 kept: it sits inside the printed-PA12-on-steel range. Life ~ 1/k_w.
-wear_inputs.k_w_1e6 = 284;
+wear_inputs.k_w_1e6 = 284;                % ODR midpoint
 wear_inputs.k_w_provisional = true;
 wear_inputs.k_w_source = ['Printed PA12 on steel: LS PA12 vs stainless 320-480, ' ...
     'Odrobina SLS gears 56-512 (284 midpoint); molded best case 16 (VDI 2736-1 Fig. 5)'];
-wear_inputs.fraction_closed = 0.50;
-wear_inputs.fraction_open = 0.50;
-wear_inputs.hours_per_day = 3;
-wear_inputs.days_per_year = 365;
-wear_inputs.design_years = 5;
+wear_inputs.fraction_closed = 0.50;      % NR-est
+wear_inputs.fraction_open = 0.50;        % NR-est
+wear_inputs.hours_per_day = 3;           % NR-est
+wear_inputs.days_per_year = 365;         % NR-est
+wear_inputs.design_years = 5;            % NR-est
 wear_life = gear_wear(vdi_results_c,vdi_results_o, ...
     gear_results_c,gear_results_o,gear,wear_inputs);
 
@@ -533,14 +543,14 @@ strength_assessment.flank_fatigue_status = ...
 
 % 1. Static strength at motor stall. The motor drives the carrier directly,
 %    so stall torque is the most the gears can see from the motor.
-T_c_peak = T_stall;                      % [N*m]
+T_c_peak = T_stall;                      % [N*m], PROJ (value NR-motor)
 static_results = static_peak_check(vdi_results_o, gear, T_c_peak, crit);
 
 % 2. PA12 temperature at the test operating points, gears running the
 %    whole test (ED = 1). Add rows for any other test you plan to run,
 %    e.g. a climb: [T_c, omega_c]. The whole motor line is also swept and
 %    reported as a warning.
-test_points = [T_c_closed, omega_c_closed; ...
+test_points = [T_c_closed, omega_c_closed; ...    % PROJ: top-speed points
                T_o_open,   omega_o_open];
 thermal_inputs.T_ambient = T_ambient;
 thermal_inputs.mu = mu_gear;

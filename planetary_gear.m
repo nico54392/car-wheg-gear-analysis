@@ -17,7 +17,7 @@ if ~geom.valid_planetary_geometry
     error('Planetary pitch geometry does not close.');
 end
 
-% Fixed ring and Willis relation.
+% Fixed ring and Willis relation: omega_s/omega_c = 1 + z_r/z_s (KG p.117).
 omega_r = 0;
 omega_s = omega_c + (N_r/N_s)*(omega_c - omega_r);
 omega_p_rel = -(N_s/N_p)*(omega_s - omega_c);
