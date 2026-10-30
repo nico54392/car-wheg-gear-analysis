@@ -1,5 +1,6 @@
 function YFa = YFa(h_Fa, s_Fn, alpha_Fan, alpha_n, m_n)
 %YFA Tooth-form factor according to DIN 3990 Method C / VDI 2736
+% Formula: DYK Eq. 3 (DIN 3990 Method C); VDI2 p.12 fn. 5 allows DIN 3990-3.
 %
 % Inputs:
 %   h_Fa      - bending arm [m]

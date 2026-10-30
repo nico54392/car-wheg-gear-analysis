@@ -1,5 +1,6 @@
 function [YSa, method_info] = YSa(s_Fn, h_Fa, rho_F, member_type)
 %YSA Tooth-root stress-correction factor using the DIN 3990-3 equation.
+% Formula: DYK Eq. 4; VDI2 p.13 fn. 6 allows DIN 3990-3 (VDI 2737 for internal).
 % For an internal ring, this is an explicit project approximation. VDI 2736
 % points to VDI 2737 for internal toothings; the DIN equation here does not
 % model VDI 2737 gear-rim influence.

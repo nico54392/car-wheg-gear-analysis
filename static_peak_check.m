@@ -4,13 +4,14 @@ function s = static_peak_check(vdi_ref, gear, T_c_peak, crit)
 % Research-use criterion: the gears must survive the largest torque the
 % motor can put on the carrier (stall), once, without breaking or yielding.
 %
+% Source IDs: VDI2 Eq. 23/24 p.20, JOH, PROJ (info/Gear_Parameter_Values_and_Sources.txt)
 % Root: VDI 2736-2 Section 3.3, Eq. (23)/(24)
 %   sigma_F,s = YFa*YSa*Ybeta*Yeps * F_t,sp/(b*m)      (no K_F, peak used directly)
 %   sigma_FP,s = 2.0*sigma_S/S_Smin                      (2.0 = local yielding, plastics)
 %   Steel planets use sigma_y/S_Smin, without the plastic 2.0 factor.
 %
 % Flank: VDI has no static flank check. Project screen based on first
-% subsurface yield for line contact, p0 = 1.67*sigma_S (Johnson, Contact
+% subsurface yield for line contact, p0 = 1.67*sigma_S (JOH: Johnson 1985, Contact
 % Mechanics), checked on the PA12 side:
 %   PASS      sigma_H <= 1.67*sigma_S/S_Smin
 %   MARGINAL  below 1.67*sigma_S but inside the safety factor: a stall may
@@ -36,7 +37,7 @@ r_r = gear.N_r1_i*gear.mod/2*1e-3;       % [m]
 d_p = gear.N_p*gear.mod*1e-3;            % [m], smaller gear in both meshes
 
 % Ring fixed: torque balance only, valid at zero speed too.
-T_s = T_c_peak/(1 + gear.N_r1_i/gear.N_s);
+T_s = T_c_peak/(1 + gear.N_r1_i/gear.N_s);   % KG p.117
 T_r = T_c_peak - T_s;
 F_sp = abs(T_s)/r_s/N;                   % per planet, reference circle (VDI Eq. 2)
 F_rp = abs(T_r)/r_r/N;

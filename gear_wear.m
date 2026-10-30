@@ -41,7 +41,7 @@ if isfield(inputs,'k_w_source'), wear.k_w_source = inputs.k_w_source;
 else, wear.k_w_source = 'provisional value'; end
 wear.k_w_scope = 'PA12/PA12 SLS dry-gear microscopy coefficient; source PV range 9.2-11.03 MPa*m/s';
 wear.equations = 'VDI 2736 Blatt 2, Eqs. (19) and (21)';
-wear.permissible_mm = [0.1,0.2]*m;
+wear.permissible_mm = [0.1,0.2]*m;   % VDI2 Eq. 21, p.19
 wear.duty = inputs;
 wear.design_hours = inputs.hours_per_day*inputs.days_per_year*inputs.design_years;
 wear.design_years = inputs.design_years;
@@ -52,7 +52,7 @@ wear.note = ['Provisional average-wear life using the upper VDI wear limit range
 
 for i = 1:numel(names)
     name = names{i};
-    lFI = 2*m;
+    lFI = 2*m;   % VDI2 p.19 footnote 13
     if isfield(inputs,'l_FI_mm') && isstruct(inputs.l_FI_mm) && isfield(inputs.l_FI_mm,name) && ...
             isscalar(inputs.l_FI_mm.(name)) && isfinite(inputs.l_FI_mm.(name))
         lFI = inputs.l_FI_mm.(name);

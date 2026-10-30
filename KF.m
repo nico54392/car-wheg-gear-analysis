@@ -9,7 +9,7 @@ function K_F = KF(gear_results, gear)
 % Equal planet load sharing is assumed elsewhere; this factor does not
 % cover planet-to-planet load imbalance.
 
-b_over_m = gear.b_p / gear.mod;
+b_over_m = gear.b_p / gear.mod;   % VDI2 p.11 / p.17: K ~ K_A for b/m <= 12
 if b_over_m > 12
     error('KF: b/m = %.2f exceeds the b/m <= 12 range of the VDI simplification.', b_over_m);
 end

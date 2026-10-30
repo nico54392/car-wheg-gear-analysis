@@ -1,42 +1,166 @@
 GEAR PARAMETER VALUES AND SOURCES
 Project: CAR wheg planetary gearbox, MATLAB model
-Snapshot of main.m on 2026-10-28. "VDI" = VDI 2736 Blatt 2 (2014), printed pages.
+Updated 2026-10-30. Same registry as the Obsidian note "06 - Sources".
 
-| Parameter | Value | Where | Source / status |
-|---|---:|---|---|
-| Module m | 1 mm | main.m mod | design |
-| Teeth sun / planet / ring | 16 / 11 / 38 | main.m | design; closure and 3-planet phasing OK |
-| Planets | 3 | main.m | design; equal sharing assumed |
-| Pressure angle | 20 deg | main.m gear.alpha | design |
-| Helix angle | 0 | main.m gear.beta | spur |
-| Profile shift sun / planet / ring | +0.40 / +0.15 / +0.70 | main.m | design; sums 0.55 / 0.55 |
-| Working pressure angle | 24.94 deg | geometry_calc.m | derived |
-| Working centre distance | 13.990 mm | geometry_calc.m | derived (13.5 mm unshifted) |
-| Face width all | 10 mm | main.m | design |
-| Root geometry for YFa/YSa | s_Fn = pi m/2, h_Fa = 1.25 m, rho_F = 0.38 m | vdi2736.m | placeholder, same for every gear |
-| Sun / ring material | HP MJF PA12 | main.m PA12 | provisional datasheet values |
-| PA12 E XY / Z | 1.7 / 1.8 GPa | main.m | XY used; room temperature |
-| PA12 nu | 0.47 | main.m | assumed |
-| PA12 tensile XY / Z | 48 / 48 MPa | main.m | datasheet, confirm grade |
-| PA12 flexural XY / Z | 65 / 70 MPa | main.m | no source cited |
-| PA12 HDT 1.82 / 0.45 MPa | 95 / 175 C | main.m | HP HR PA12 datasheet |
-| Planet material | stainless steel, E 193 GPa, nu 0.30, sigma_y 205 MPa | main.m steel | grade not fixed |
-| K_A | 1.25 | main.m gear.K_A | VDI p.7 upper end for electric motors |
-| K_F, K_H | = K_A | KF.m, KH.m | VDI p.11, p.17 |
-| Quality / deviations | Q 9, all deviations 0 | main.m | idealized |
-| Friction mu | 0.20 | main.m mu_gear | VDI Table 2, dry plastic/steel |
-| k_theta root / flank | 900 / 6300 K (m/s)^0.75 mm^1.75 / W | main.m | VDI Table 3, dry plastic/steel |
-| ED | 0.30 | main.m | assumed engagement fraction |
-| R_lambda_G, A_G | 0, 1 m^2 | main.m | open housing, VDI Table 4 |
-| Ambient | 25 C | main.m | assumption |
-| Vehicle mass | 8 kg | main.m | estimate |
-| Crr / grade | 0.10 / 0 deg | main.m | assumption |
-| Air density / frontal area | 1.225 kg/m^3 / 0.0364 m^2 | main.m | standard / geometry |
-| Drivetrain efficiency | 0.94 | main.m | assumption |
-| Motor | 7.65 N m stall, 170 rpm, 12 V | main.m motor | no datasheet cited |
-| Wheel radius closed / open | 0.060 / 0.1029 m | main.m | geometry |
-| Wear k_w | 284e-6 mm^3/(N m) | main.m wear_inputs | Odrobina, PA12/PA12 midpoint; real pairing is PA12/steel |
-| Wear duty | 50 % closed / 50 % open, 3 h/day, 365 d, 5 yr | main.m | user schedule (5475 h) |
-| Wear limit | 0.1-0.2 m | gear_wear.m | VDI Eq. 21 |
-| Root fatigue screen | 25 MPa runout at 1e7 | main.m fatigue_data | TA EF037 coupons, not gear data |
-| Outer ring / output | N_r2 38, N_r1_o 50, N_q 50 | main.m | packaging, not rated |
+Every value in main.m and the function files carries one of the IDs below in its comment (e.g. "% VDI2 Tab. 2"). Local files open straight from the links.
+
+The table at the bottom ("Where each input comes from") lists every input with its source.
+
+
+Project (N. Ramos)
+
+== NR-geo
+N. Ramos, gear design. Tooth counts (16 / 11 / 38, outer 38 / 50 / 50), module 1 mm, face width 10 mm, pressure angle 20°, helix 0°, profile shifts +0.40 / +0.15 / +0.70, 3 planets. Set in `main.m`; should match CAD.
+
+== NR-cad
+N. Ramos, robot design (CAD). Wheel radius closed 0.060 m and open 0.1029 m, body dimensions behind the frontal area (0.07 × 0.24 + 2 × 0.14 × 0.07 m).
+
+== NR-motor
+Drive motor datasheet, via N. Ramos. 12 V; no-load 170 rpm; loaded 145 rpm; stall 78 kg·cm (= 7.65 N·m); rated 11.5 kg·cm. ±10 % on speed. *Motor model not recorded yet; add the part number and datasheet link here.*
+
+== NR-est
+N. Ramos, project estimates and assumptions (in `main.m`, not measured): vehicle mass 8 kg; rolling resistance 0.10; grade 0°; drivetrain efficiency 0.94; ambient 25 °C; voltage fraction 1.0; ED 0.30; wear duty 50/50 closed/open, 3 h/day, 365 d, 5 yr; quality Q 9; all deviations and tolerances 0; PA12 Poisson ratio 0.47 (no source found, see FAES); steel ν 0.30 (see MIF304).
+
+== PROJ
+Project criteria, 2026-10-30. Framing set by N. Ramos: research prototype, short tests; the gears must survive static use and not melt or be badly affected by temperature; life is reference only. Specific thresholds chosen in the analysis to implement that: peak load = motor stall; flank static screen at first subsurface yield (JOH); test duty ED = 1; Tg = CAUTION, HDT = FAIL.
+
+
+Standards
+
+== VDI2
+VDI 2736 Blatt 2 (2014). *Thermoplastic gear wheels — Cylindrical gears — Calculation of the load-carrying capacity.* Verein Deutscher Ingenieure, Düsseldorf. [Local PDF](file:///C:/Users/nico5/OneDrive/Documents/Textbooks/Engineering%20Resources/Vdi2736-Blatt%202%20-%20PLASTIC%20GEAR%20CRITERIA.pdf) · [VDI page](https://www.vdi.de/en/home/vdi-standards/details/vdi-2736-blatt-2-thermoplastic-gear-wheels-cylindrical-gears-calculation-of-the-load-carrying-capacity). Page numbers are printed pages.
+
+| What | Where |
+|---|---|
+| K_A ≈ 1…1.25 (electric motor) | p.7 |
+| Root temperature, Eq. 7; H_V, Eq. 8 | p.8–10 |
+| Flank temperature, Eq. 9 | p.10 |
+| μ (Table 2), k_θ (Table 3) | p.10 |
+| R_λ,G (Table 4) | p.11 |
+| σ_F, Eq. 10; K_F ≈ K_A for b/m ≤ 12; Y_Fa,ring ≈ 2 | p.11 |
+| Y_Fa (Fig. 1); Y_Sa (Fig. 2) | p.12–13 |
+| Y_ε, Eq. 11; Y_β, Eq. 12; σ_FP, Eq. 13 (Y_St 2.0) | p.13 |
+| S_Fmin, σ_FlimN (Fig. 3, Table 5) | p.14–15 |
+| σ_H, Eq. 14; Z_E, Eq. 15 | p.15 |
+| Z_H (Fig. 4); Z_ε, Eq. 16; ν ≈ 0.35 note | p.16 |
+| K_H ≈ K_A, σ_HP Eq. 17, Z_R ≈ 1 | p.17 |
+| Wear, Eq. 18–21; l_Fl ≈ 2·m (fn. 13); k_w (Table 6) | p.19 |
+| Deformation, Eq. 22; λ_zul = 0.07·m; peak load, Eq. 23–24, S_Smin 1.5 | p.20 |
+| Efficiency 0.8 for dry plastic/plastic | p.21 |
+| Geometry: α_t, d_b, d_w, inv α_w, ε_i, d_Nf | p.21–22 |
+
+== VDI1
+VDI 2736 Blatt 1 (2016). *Thermoplastic gear wheels — Materials, material selection, production methods, production tolerances, form design.* [Local PDF](file:///C:/Users/nico5/OneDrive/Documents/Textbooks/Engineering%20Resources/Vdi2736-Blatt-1.pdf). Fig. 5 p.19: pin-on-disc k_w and μ vs 100Cr6 (PA12 ≈ 16·10⁻⁶ mm³/(N·m), μ ≈ 0.27). Table 5 p.20: steel partner roughness for PA12, Rz 0.5–1.0 µm, HRC > 50.
+
+== ISO6336-2
+ISO 6336-2:2006, Calculation of load capacity of spur and helical gears, Part 2: surface durability. [Local PDF](file:///C:/Users/nico5/OneDrive/Documents/Textbooks/Engineering%20Resources/ISO-6336-2-2006%20%20-%20GEARS.pdf). Z_H, Eq. 16 (VDI2 p.16 fn. 10 allows the DIN 3990-2 form).
+
+== KG
+KG STOCK GEARS Technical Data (Kyouiku Gear). [Local PDF](file:///C:/Users/nico5/OneDrive/Documents/Textbooks/Engineering%20Resources/TechnicalData_KGSTOCKGEARS.pdf). PDF page numbers:
+- p.11, Table 3: standard basic rack α 20°, h_aP 1.00m, h_fP 1.25m, c 0.25m, ρ_fP 0.38m, p = πm (tooth thickness πm/2 at the reference line).
+- p.30: undercut limit x = (17 − z)/17 for 20°, equal to 1 − z·sin²α/2; working pressure angle inv α_w = 2·tan α·(x₁ + x₂)/(z₁ + z₂) + inv α.
+- p.117, §9.9: planetary ratio with the ring fixed, 1 + z_r/z_s; assembly condition (z_s + z_r)/N = integer; closure z_r = z_s + 2·z_p.
+
+== DYK
+Doğan, O., Yüce, C., Karpat, F. (2021). *A Novel Method for Tooth Bending Stress Calculation of Gears with Asymmetric Teeth.* Research Square preprint. [doi:10.21203/rs.3.rs-758867/v1](https://doi.org/10.21203/rs.3.rs-758867/v1) · [Local PDF](file:///C:/Users/nico5/OneDrive/Documents/Textbooks/Engineering%20Resources/DIN%203390%20Eqs.pdf) (filed as "DIN 3390 Eqs"). Gives the DIN 3990 Method C forms: Y_Fa Eq. 3, Y_Sa Eq. 4 (1.2 + 0.13·L)·q_s^(1/(1.21 + 2.3/L)), Y_ε Eq. 5.
+
+
+Materials
+
+== HP-DS
+HP 3D High Reusability PA 12 datasheet, doc. 4AA6-4895ENA, March 2018. [PDF (Shapeways copy)](https://www.shapeways.com/wp-content/uploads/2021/01/HP-MJF-PA-12-Data-sheet.pdf). Tensile strength 48 MPa XY/Z (ASTM D638); tensile modulus 1800 MPa XY/Z; flexural strength 65 XY / 70 Z MPa (ASTM D790); HDT 175 °C at 0.45 MPa, 95 °C at 1.82 MPa (ASTM D648); powder melting point 187 °C (ASTM D3418). Typical values, not for specification.
+
+== HP-TFS
+HP 3D HR PA 12 Materials Technical Fact Sheet, balanced print mode, doc. 4AA7-1534EEW, Nov 2017. [PDF](https://erpro-group.com/wp-content/uploads/2018/10/HP-3D-HR-PA12-Extended-datasheet.pdf). Tensile modulus 1700 MPa XY, 1800 MPa Z (ASTM D638). Note: a second table in the same sheet gives HDT 1.82 MPa XY as 80 °C (vs 95 °C on p.1).
+
+== OD20
+O'Connor, H.J., Dowling, D.P. (2020). *Comparison between the properties of polyamide 12 and glass bead filled polyamide 12 using the multi jet fusion printing process.* Additive Manufacturing 31. [doi:10.1016/j.addma.2019.100961](https://doi.org/10.1016/j.addma.2019.100961) · [UCD open copy](https://researchrepository.ucd.ie/rest/bitstreams/46424/retrieve). MJF PA12: Tg 44 °C (DSC, Table 5); tensile strength 47/48/49 MPa X/Y/Z (Table 6).
+
+== FAES
+Faes, M., Wang, Y., Lava, P., Moens, D. *Variability in the Mechanical Properties of Laser Sintered PA-12 Components.* Solid Freeform Fabrication Symposium 2015. [PDF](https://utw10945.utweb.utexas.edu/sites/default/files/2015/2015-69-Faes.pdf). Poisson's ratio LS PA12 0.40 (DIC, ASTM D638; 0.387–0.409 by orientation).
+
+== NAR23
+Nar, K., Majewski, C., Lewis, R. (2023). *Evaluating the effect of solid lubricant inclusion on the friction and wear properties of Laser Sintered Polyamide-12 components.* Wear 522, 204873. [doi:10.1016/j.wear.2023.204873](https://doi.org/10.1016/j.wear.2023.204873) · [White Rose open copy](https://eprints.whiterose.ac.uk/id/eprint/202329/7/1-s2.0-S0043164823002569-main.pdf). Neat LS PA12 vs stainless ball, 0.35 m/s: k_w 4.78·10⁻⁴ (10 N) and 3.20·10⁻⁴ (30 N) mm³/(N·m), μ 0.31 / 0.26 (Table 5).
+
+== ODR
+Odrobina, M. *Polimer fogaskerékpárok tribológiai viselkedésének értékelése hagyományos és XCT technológiával* (Tribological evaluation of polymer gear pairs with conventional and XCT methods). PhD thesis, MATE. [Repository](https://phd.mater.uni-mate.hu/409) · [Thesis PDF](https://phd.mater.uni-mate.hu/409/11/odrobina_miklos_thesis_DOI.pdf). SLS PA12/PA12 dry gears: k_w 56–512·10⁻⁶ mm³/(N·m) (284 = midpoint), at pv 9.2–11.03 MPa·m/s.
+
+== TA
+TA Instruments, Application Note EF037. *Tensile and Fatigue Properties of Additively Manufactured Polyamides.* [PDF](https://www.tainstruments.com/pdf/literature/EF037.pdf). SLS PA12 dog-bones, R = 0.1, 25 Hz: 25 MPa ran out at 10⁷ cycles.
+
+== TN304
+Thomasnet, "All About 304 Steel". [Article](https://www.thomasnet.com/articles/metals-metal-products/all-about-304-steel-properties-strength-and-uses/). 304 stainless: yield 205 MPa, UTS 515 MPa, E 193–200 GPa. The model assumes the planets are 304; the grade isn't confirmed yet.
+
+== MIF304
+MakeItFrom, Annealed 304 Stainless Steel. [Page](https://www.makeitfrom.com/material-properties/Annealed-304-Stainless-Steel). Poisson's ratio 0.28 (the model's 0.30 is NR-est).
+
+
+Physics and constants
+
+== JOH
+Johnson, K.L. (1985). *Contact Mechanics.* Cambridge University Press. ISBN 978-0-521-34796-9. [Catalogue](https://ci.nii.ac.jp/ncid/BA00227815?l=en). Line (cylinder) contact: max shear 0.30·p₀ below the surface, so Tresca first yield at p₀ = 3.3k = 1.67·Y.
+
+== USSA76
+U.S. Standard Atmosphere, 1976 (COESA). [Definitions (PDAS)](https://www.pdas.com/atmosdef.html). Sea-level density 1.225 kg/m³.
+
+== GN
+Standard gravity g_n = 9.80665 m/s² (3rd CGPM, 1901). [Reference](https://en.wikipedia.org/wiki/Standard_gravity). The model rounds to 9.81.
+
+
+Other references (not value sources)
+
+- JSME, *Design of high-pressure-angle gears with a small number of teeth* (2025), doi:10.1299/jsmemecj.2025.s112-12. [Link](https://cir.nii.ac.jp/crid/1390870696563807744). Background for the 11-tooth planet.
+- *Static and fatigue behavior in presence of notches for PA12 additively manufactured via Multi Jet Fusion*, International Journal of Fatigue. [Link](https://www.sciencedirect.com/science/article/abs/pii/S0142112322001815). Background for PA12 root fatigue.
+- SLS PA12 gear single-tooth bending fatigue, doi:10.1177/14644207221074902. Not located yet; would replace TA.
+- Local background: [PLA Nylon Gear Study](file:///C:/Users/nico5/OneDrive/Documents/Textbooks/Engineering%20Resources/PLA%20Nylon%20Gear%20Study.pdf).
+- Code: [car-wheg-gear-analysis repo](file:///C:/Users/nico5/OneDrive/Documents/MATLAB/CAR%20Gearbox/Gear%20Analysis/car-wheg-gear-analysis) · [GitHub](https://github.com/nico54392/car-wheg-gear-analysis). Repo copy of this registry: `info/Gear_Parameter_Values_and_Sources.txt`.
+
+
+Where each input comes from
+
+Every hard-coded number in `main.m` and the function files.
+
+| Value | In code | Source |
+|---|---|---|
+| m 1 mm; z 16/11/38; outer 38/50/50; 3 planets | `mod`, `N_*`, `N_p_planets` | NR-geo |
+| α 20°, β 0°; x +0.40/+0.15/+0.70; b 10 mm | `gear.alpha/beta/x_*/b_*` | NR-geo |
+| Wheel radius 0.060 / 0.1029 m; frontal area dims | `r_wheel_*`, `A_vcl` | NR-cad |
+| 12 V; 170 rpm; 7.65 N·m | `motor.*` | NR-motor |
+| 8 kg; C_rr 0.10; grade 0; η 0.94; voltage fraction 1.0 | `m_vcl`, `Crr`, `theta`, `nu_drvtr` | NR-est |
+| ρ_air 1.225 kg/m³ | `rho_air` | USSA76 |
+| g 9.81 m/s² | inline `9.81` | GN |
+| PA12 E 1700 XY / 1800 Z MPa | `PA12.E_XY/E_Z` | HP-TFS (public sheet: 1800 both, HP-DS) |
+| PA12 ν 0.47 | `PA12.nu` | NR-est; measured 0.40 FAES |
+| PA12 tensile 48 MPa; flexural 65/70 MPa | `PA12.tensile_*`, `flexural_*` | HP-DS |
+| PA12 HDT 95 / 175 °C; melt 187 °C | `PA12.HDT_*`, `T_melt` | HP-DS |
+| PA12 Tg 44 °C; σ_S = 48 MPa (47–49) | `PA12.Tg`, `PA12.sigma_S` | OD20, HP-DS |
+| Steel E 193 GPa; σ_y 205; σ_u 515 MPa | `steel.*` | TN304 |
+| Steel ν 0.30 | `steel.nu` | NR-est; 0.28 MIF304 |
+| Root runout 25 MPa at 10⁷ | `fatigue_data` | TA |
+| μ 0.20 | `mu_gear` | VDI2 Table 2, dry plastic/steel |
+| k_θ 900 / 6300 | `k_theta_*` | VDI2 Table 3, plastic/steel |
+| R_λ,G 0 | `R_lambda_G` | VDI2 Table 4, open housing |
+| A_G 1 m² | `A_G` | placeholder; unused when R_λ,G = 0 (VDI2 Eq. 7) |
+| ED 0.30 (reference) / 1.0 (test check) | `ED`, `thermal_check` | NR-est / PROJ |
+| T_ambient 25 °C | `T_ambient` | NR-est |
+| K_A 1.25; K_F = K_H = K_A | `gear.K_A`, `KF.m`, `KH.m` | VDI2 p.7, p.11, p.17 |
+| S_Smin 1.5; root factor 2.0 | `crit.S_Smin`, `static_peak_check` | VDI2 Eq. 24 |
+| Flank screen 1.67 | `static_peak_check` | JOH, PROJ |
+| Tg / HDT thresholds | `crit.T_soft/T_limit` | PROJ, values OD20 / HP-DS |
+| Peak load = stall | `T_c_peak` | PROJ, value NR-motor |
+| k_w 284·10⁻⁶ | `wear_inputs.k_w_1e6` | ODR; cross-check NAR23, VDI1 |
+| Wear duty 50/50, 3 h/d, 365 d, 5 yr | `wear_inputs.*` | NR-est |
+| Q 9; f_* = 0; tolerances 0 | `gear.Q`, `gear.f_*`, `gear_tol` | NR-est |
+| Root placeholders s_Fn πm/2, h_Fa 1.25m, ρ_F 0.38m | `vdi2736.m` | KG p.11 basic rack |
+| Y_Fa,ring 2.0 | `vdi2736.m` | VDI2 p.11 |
+| Y_Fa, Y_Sa formulas | `YFa.m`, `YSa.m` | DYK Eq. 3–4 (DIN 3990 Method C), allowed by VDI2 fn. 5–6 |
+| Y_ε 0.25 + 0.75/ε_α | `Yepsilon.m` | VDI2 Eq. 11 |
+| Z_E, Z_ε, Z_H | `ZE.m`, `Zepsilon.m`, `ZH.m` | VDI2 Eq. 15, 16; ISO6336-2 Eq. 16 |
+| b/m ≤ 12 limit | `KF.m`, `KH.m` | VDI2 p.11 |
+| λ factor 7.5; λ_zul 0.07·m | `vdi2736.m` | VDI2 Eq. 22 |
+| H_V; ε_α 1–2 range | `vdi2736.m` | VDI2 Eq. 8 |
+| Wear limit 0.1–0.2·m; l_Fl 2·m | `gear_wear.m` | VDI2 Eq. 21, fn. 13 |
+| Tip/root circles (1 ± x)·m, 1.25m dedendum | `geometry_calc.m`, `vdi2736.m` | KG p.11; VDI2 p.22 |
+| inv α_w from shift sum; closure; phasing | `geometry_calc.m` | KG p.30, p.117; VDI2 p.22 |
+| Undercut x_min = 1 − z·sin²α/2 | `geometry_calc.m` | KG p.30 |
+| Willis relation, ring fixed | `planetary_gear.m` | KG p.117 |

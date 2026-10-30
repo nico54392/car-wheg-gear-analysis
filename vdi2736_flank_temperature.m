@@ -1,6 +1,6 @@
 function T_flank = vdi2736_flank_temperature(T_ambient,mu,P,H_V,...
     k_theta_flank,b_m,z,v,m_mm,R_lambda_G,A_G,ED)
-%VDI2736_FLANK_TEMPERATURE VDI 2736 Blatt 2 Eq. (9), flank temperature.
+%VDI2736_FLANK_TEMPERATURE VDI 2736 Blatt 2 Eq. (9), flank temperature. (VDI2 p.10)
 % b_m is face width [m]; module m_mm [mm]; v [m/s]; P [W];
 % k_theta_flank [K*(m/s)^0.75*mm^1.75]; result [deg C].
 validate_inputs(T_ambient,mu,P,H_V,k_theta_flank,b_m,z,v,m_mm,...

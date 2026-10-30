@@ -1,5 +1,5 @@
 function ZE = ZE(E1, nu1, E2, nu2)
-%ZE Elasticity factor according to VDI 2736
+%ZE Elasticity factor according to VDI 2736, VDI2 Eq. 15, p.15
 %
 % Inputs:
 %   E1  - Young's modulus of gear 1 [Pa]

@@ -9,6 +9,6 @@ function Yepsilon = Yepsilon(epsilon_alpha)
 %   Yepsilon      - contact-ratio factor [-]
 
 
-Yepsilon = .25 +.75/ epsilon_alpha;
+Yepsilon = .25 +.75/ epsilon_alpha;   % VDI2 Eq. 11, p.13 (also DYK Eq. 5)
 
 end
