@@ -99,10 +99,9 @@ T_ambient = 25;  % [deg C], NR-est
 % sheet 4AA7-1534EEW (2017, balanced mode). Typical values, not spec.
 % ============================================================
 
-PA12.E_XY = 1.7e9;                 % Young's modulus, XY [Pa], HP-TFS (HP-DS says 1800)
-PA12.E_Z  = 1.8e9;                 % Young's modulus, Z [Pa], HP-TFS / HP-DS
-PA12.nu   = 0.47;                  % Poisson's ratio [-], NR-est, no source;
-                                   % measured LS PA12 = 0.40 (FAES). 0.47 is ~4% conservative on sigma_H.
+PA12.E_XY = 1.8e9;                 % Young's modulus, XY [Pa], HP-DS (HP-TFS lists 1700)
+PA12.E_Z  = 1.8e9;                 % Young's modulus, Z [Pa], HP-DS
+PA12.nu   = 0.40;                  % Poisson's ratio [-], FAES (LS PA12, DIC, 0.387-0.409)
 
 PA12.tensile_strength_XY = 48e6;   % Tensile strength, XY [Pa], HP-DS (ASTM D638)
 PA12.tensile_strength_Z  = 48e6;   % Tensile strength, Z [Pa], HP-DS
@@ -110,8 +109,8 @@ PA12.tensile_strength_Z  = 48e6;   % Tensile strength, Z [Pa], HP-DS
 PA12.flexural_strength_XY = 65e6;  % Flexural strength @5%, XY [Pa], HP-DS (ASTM D790)
 PA12.flexural_strength_Z  = 70e6;  % Flexural strength @5%, Z [Pa], HP-DS
 
-PA12.HDT_182 = 95;                 % HDT at 1.82 MPa [°C], HP-DS (ASTM D648);
-                                   % HP-TFS also lists 80 C for XY in a second table
+PA12.HDT_182 = 95;                 % HDT at 1.82 MPa [°C], HP-DS (ASTM D648).
+                                   % HP-TFS also lists 80 C XY in one table; HP-DS used.
 PA12.HDT_045 = 175;                % HDT at 0.45 MPa [°C], HP-DS
 
 % Select the effective modulus for the current gear orientation.

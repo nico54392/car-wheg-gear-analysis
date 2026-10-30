@@ -36,9 +36,9 @@ RESULTS (2026-10-30)
     sun root 40.4 / 64.0 MPa allow           PASS (1.58x)
     ring root 24.2 / 64.0                    PASS (2.65x)
     steel planet roots 40.4 and 36.8 / 137   PASS
-    sun-planet flank 65.7 MPa                MARGINAL: over the 53.4 MPa
+    sun-planet flank 65.1 MPa                MARGINAL: over the 53.4 MPa
       screen, under first yield (80 MPa). A stall may mark the sun flank.
-    planet-ring flank 41.0 / 53.4            PASS
+    planet-ring flank 40.6 / 53.4            PASS
   Temperature, gears running the whole test (flank / body):
     closed top speed  54 / 29 C              CAUTION (flank above Tg)
     open top speed    74 / 32 C              CAUTION
