@@ -160,8 +160,8 @@ steel.grade = '304 assumed (TN304) - confirm';
 % this only as a lower-bound root-fatigue screen. It is room-temperature
 % tensile-coupon data, not gear-tooth data; no temperature correction exists.
 % Flank contact fatigue remains unassessed.
-fatigue_data.runout_stress_Pa = 25e6;
-fatigue_data.runout_cycles = 1e7;
+fatigue_data.runout_stress_Pa = 25e6;    % [Pa], TA
+fatigue_data.runout_cycles = 1e7;        % [-], TA
 
 T_HDT_1p82 = 95;                          % [deg C], HP-DS
 T_HDT_0p45 = 175;                         % [deg C], HP-DS
@@ -265,12 +265,12 @@ gear.f_b = 0;                            % NR-est
 % Enter +/- half-widths in mm from part drawings or measured parts.
 % Nominal backlash defaults to zero until an intentional value is specified.
 % All zero for now: NR-est.
-gear_tol.sun_tooth_thickness_mm = 0;     % [mm], +/- circumferential thickness
-gear_tol.planet_tooth_thickness_mm = 0;  % [mm], +/- circumferential thickness
-gear_tol.ring_tooth_thickness_mm = 0;    % [mm], +/- circumferential thickness
-gear_tol.planet_radial_position_mm = 0;  % [mm], +/- planet center location
-gear_tol.nominal_backlash_sp_mm = 0;     % [mm], sun-planet mesh
-gear_tol.nominal_backlash_rp_mm = 0;     % [mm], planet-ring mesh
+gear_tol.sun_tooth_thickness_mm = 0;     % [mm], +/- circumferential thickness, NR-est
+gear_tol.planet_tooth_thickness_mm = 0;  % [mm], +/- circumferential thickness, NR-est
+gear_tol.ring_tooth_thickness_mm = 0;    % [mm], +/- circumferential thickness, NR-est
+gear_tol.planet_radial_position_mm = 0;  % [mm], +/- planet center location, NR-est
+gear_tol.nominal_backlash_sp_mm = 0;     % [mm], sun-planet mesh, NR-est
+gear_tol.nominal_backlash_rp_mm = 0;     % [mm], planet-ring mesh, NR-est
 interference_cases = gear_interference_cases(gear,gear_tol);
 
 
