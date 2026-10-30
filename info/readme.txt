@@ -1,58 +1,63 @@
 CAR WHEG PLANETARY GEARBOX — MATLAB MODEL
-Last updated: 2026-10-28
+Last updated: 2026-10-30
 
-WHAT IT DOES
-3-planet fixed-ring planetary stage, equal load sharing. main.m works out the
-vehicle demand (closed and open wheel), then for each case runs:
-  planetary_gear.m  -> speeds, torques, per-planet mesh forces
-  vdi2736.m         -> VDI 2736 Blatt 2 root stress, flank stress, deformation, H_V
-  gear_temperature.m-> VDI Eq. 7 / 9 root and flank temperatures
-  gear_safety.m     -> static screens + provisional PA12 root runout check
-  gear_wear.m       -> VDI Eq. 19 / 21 average wear life
-Shared geometry (pitch, working angle, shifts, closure) lives in geometry_calc.m.
-Run main.m. Detailed assumptions: gear_model_assumptions_and_results_status.md
+WHAT IT'S FOR
+Research prototype, short lab tests. The gears have to survive the worst
+load the motor can apply and not soften or melt during a test. Life is
+nice to know, not a requirement.
 
-CURRENT DESIGN (as coded in main.m)
-  Teeth sun/planet/ring: 16 / 11 / 38, m = 1 mm, b = 10 mm, spur
-  Pressure angle 20 deg; shifts +0.40 / +0.15 / +0.70 -> working angle 24.94 deg, a_w = 13.990 mm
-  Sun and ring: HP MJF PA12. Planets: stainless steel.
-  K_A = 1.25 (KF = KH = K_A per VDI), mu = 0.20, k_theta 900 / 6300, ED = 0.30, open air
+PASS/FAIL CHECKS
+  1. static_peak_check.m  Static strength at motor stall (7.65 N*m on the
+                          carrier). VDI 2736-2 Sec. 3.3, Eq. 23/24 for the
+                          roots; first-subsurface-yield screen for flanks.
+  2. thermal_check.m      PA12 temperature at the test operating points with
+                          the gears running the whole test (ED = 1).
+                          PASS < Tg 44 C, CAUTION < HDT 95 C, FAIL above.
+                          Also sweeps the whole motor line as a warning.
 
-CURRENT RESULTS (run 2026-10-28, after the VDI audit fixes)
-                          closed     open
-  Force per planet [N]     6.20     10.69   (at reference diameter)
-  Max root stress [MPa]    3.32      5.72   (sun / planet, sun-planet mesh)
-  Max flank stress [MPa]  18.82     24.71   (sun-planet)
-  Ring flank [MPa]        11.75     15.42
-  Max temperature [C]     38.4      47.8    (sun flank characteristic)
-  Contact ratio sp / rp   1.331 / 1.532
-  Wear life to 0.1 m      15 h, sun governs  <-- far short of the 5475 h target
+REFERENCE ONLY (with the conditions they assume, printed by main.m)
+  Wear life (gear_wear.m), PA12 root fatigue runout (gear_safety.m),
+  stresses and temperatures at the nominal top-speed points.
 
-Old numbers (30.4 MPa, 40.4 MPa, ~49 C, and the 77.5 C ring) are superseded.
+CALL CHAIN
+  main.m -> geometry_calc -> planetary_gear -> vdi2736 -> gear_temperature
+         -> gear_safety, gear_wear (reference)
+         -> static_peak_check, thermal_check (pass/fail)
+  thermal_check reruns planetary_gear/vdi2736/gear_temperature quietly.
 
-FIXES APPLIED IN THE 2026-10-28 VDI AUDIT
-1. Ring tip radius used (1+x_r); now (1-x_r), matching geometry_calc. The old
-   tip sat inside the base circle, so the ring contact ratio came out ~3.35
-   instead of 1.53. That made ring-mesh stresses too low and H_V too high.
-2. Partial contact ratios now use r_b*tan(alpha_wt) per VDI p.22 (was r*sin).
-3. Internal mesh uses (u-1)/u in sigma_H and H_V (DIN 3990 sign convention).
-4. Rating force taken at the reference diameter (VDI Eq. 2/10), not the
-   working diameter. Mesh power still uses working-circle values.
-5. KF/KH now return K_A, per VDI p.11/17. K_A moved to 1.25 in main.m, so
-   the numbers are unchanged; the conservatism is just visible now.
-6. mu set to 0.20 (VDI Table 2, dry plastic/steel). Was an unsourced 0.129.
-7. Added checks: ring tip inside base circle, and eps_alpha outside 1..2 for Eq. 8.
+CURRENT DESIGN
+  Teeth sun/planet/ring 16 / 11 / 38, m = 1 mm, b = 10 mm, spur, 3 planets
+  alpha 20 deg, shifts +0.40 / +0.15 / +0.70 -> alpha_w 24.94 deg, a_w 13.990 mm
+  Sun, ring: MJF PA12. Planets: stainless steel.
+  K_A = 1.25, mu = 0.20, k_theta 900 / 6300, open housing, 25 C ambient
 
-STILL OPEN
-- YFa / YSa use one placeholder root geometry for every gear; they ignore
-  tooth count and profile shift. Read the VDI Fig. 1 / 2 values per gear or
-  do a proper DIN 3990-3 root-section calc.
-- Planet at x = 0.15 is below the rack undercut limit (x_min ~ 0.36).
-- Steel planets are outside VDI 2736; rate them with ISO 6336 if it matters.
-- gear_safety compares stress straight to flexural/yield strength. It is not
-  the VDI check: that needs sigma_FP = 2.0*sigma_FlimN/S_Fmin (S_Fmin 2.0)
-  and sigma_HP with S_Hmin 1.4, using PA12 data at the computed temperature.
-- Wear: k_w is a provisional PA12/PA12 value but the actual pairing is
-  PA12/steel. Wear on the steel planet entries is not meaningful.
-- Ring YSa uses the external formula; VDI points to VDI 2737 for internal gears.
-- Equal planet sharing and zero tolerances are idealized.
+RESULTS (2026-10-30)
+  Static at stall, 94.4 N per planet:
+    sun root 40.4 / 64.0 MPa allow           PASS (1.58x)
+    ring root 24.2 / 64.0                    PASS (2.65x)
+    steel planet roots 40.4 and 36.8 / 137   PASS
+    sun-planet flank 65.7 MPa                MARGINAL: over the 53.4 MPa
+      screen, under first yield (80 MPa). A stall may mark the sun flank.
+    planet-ring flank 41.0 / 53.4            PASS
+  Temperature, gears running the whole test (flank / body):
+    closed top speed  54 / 29 C              CAUTION (flank above Tg)
+    open top speed    74 / 32 C              CAUTION
+    Holding high torque at low speed (3-139 carrier rpm on the motor line)
+    for a long time would push the flank over HDT. Keep those moments short.
+  OVERALL: PASS, with those two flags.
+
+  Reference: wear 15 h to 0.1*m at the nominal points (k_w 284e-6, printed
+  PA12 on steel), root stress 5.7 MPa vs 25 MPa coupon runout.
+
+OPEN
+- YFa / YSa are one placeholder geometry for all gears (YFa 3.04). The
+  real sun value is ~2.5, so the stall root margin is probably better.
+- Planet x = 0.15 is below the rack undercut limit (~0.36).
+- sigma_S for PA12 = 23 C tensile strength (48 MPa); no hot-strength data.
+- Add test_points rows in main.m for any harder test (e.g. a climb).
+- Power path (carrier -> sun) should be confirmed against CAD.
+- Ring YSa per VDI 2737, K_gamma, tolerances, steel grade.
+
+VDI AUDIT 2026-10-28 (commit 914ecfb): ring tip sign, contact ratio
+r_b*tan(alpha_wt), internal (u-1), F_t at reference d, KF = KH = K_A,
+mu 0.20. Details in gear_model_assumptions_and_results_status.md.

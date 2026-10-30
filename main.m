@@ -1,4 +1,14 @@
- close all;
+% CAR wheg planetary gear analysis (VDI 2736 Blatt 2)
+%
+% This is a research prototype for short lab tests. The pass/fail checks are:
+%   1. Static strength at the largest torque the motor can apply (stall),
+%      VDI 2736-2 Section 3.3           -> static_peak_check.m
+%   2. PA12 temperature, hottest point on the whole motor line with the
+%      gears running the entire test   -> thermal_worst_case.m
+% Wear and fatigue life are reported for reference only, together with
+% the operating conditions they assume.
+
+close all;
 clc;
 clear;
 
@@ -107,6 +117,16 @@ PA12.flexural_strength = PA12.flexural_strength_XY;
 % Tensile strength retained as a separate material property.
 PA12.tensile_strength = PA12.tensile_strength_XY;
 
+% Static strength for the peak-load check. MJF PA12 fails ductile without a
+% clear yield point, so tensile strength stands in for sigma_S.
+% (MJF PA12 X/Y/Z 47/48/49 MPa, UCD MJF PA12 vs PA12-GB study.)
+PA12.sigma_S = PA12.tensile_strength_XY;  % [Pa], at 23 C
+
+% Temperature limits for short tests
+PA12.Tg = 44;          % [deg C] glass transition, DSC, MJF PA12 (UCD study).
+                       % Above this, stiffness and strength drop noticeably.
+PA12.T_melt = 187;     % [deg C] HP 3D HR PA12 datasheet
+
 
 % ============================================================
 % STAINLESS STEEL - PLANETS
@@ -151,6 +171,18 @@ ED = .3;                               % [-], assumed relative engagement/duty f
 R_lambda_G = 0;                          % [K*m^2/W]
 
 A_G = 1;                                 % [m^2]
+
+
+%% ========================================
+%          RESEARCH-USE PASS/FAIL CRITERIA
+% ========================================
+
+crit.S_Smin = 1.5;                       % VDI 2736-2 Eq. (24), against yield
+crit.sigma_S_PA12 = PA12.sigma_S;        % [Pa]
+crit.sigma_y_steel = steel.sigma_y;      % [Pa]
+crit.T_soft = PA12.Tg;                   % [deg C] PASS below, CAUTION above
+crit.T_limit = PA12.HDT_182;             % [deg C] FAIL above (HDT 1.82 MPa)
+crit.T_melt = PA12.T_melt;               % [deg C] reported only
 
 
 %% ========================================
@@ -496,243 +528,155 @@ strength_assessment.flank_fatigue_status = ...
 
 
 %% ========================================
-%          THERMAL CHECK
+%          RESEARCH-USE CHECKS
 % ========================================
 
-T_max_c = temp_results_c.T_max;
-T_max_o = temp_results_o.T_max;
+% 1. Static strength at motor stall. The motor drives the carrier directly,
+%    so stall torque is the most the gears can see from the motor.
+T_c_peak = T_stall;                      % [N*m]
+static_results = static_peak_check(vdi_results_o, gear, T_c_peak, crit);
 
-thermal_margin_c = ...
-    T_HDT_1p82 - T_max_c;
-
-thermal_margin_o = ...
-    T_HDT_1p82 - T_max_o;
+% 2. PA12 temperature at the test operating points, gears running the
+%    whole test (ED = 1). Add rows for any other test you plan to run,
+%    e.g. a climb: [T_c, omega_c]. The whole motor line is also swept and
+%    reported as a warning.
+test_points = [T_c_closed, omega_c_closed; ...
+               T_o_open,   omega_o_open];
+thermal_inputs.T_ambient = T_ambient;
+thermal_inputs.mu = mu_gear;
+thermal_inputs.k_theta_root = k_theta_root;
+thermal_inputs.k_theta_flank = k_theta_flank;
+thermal_inputs.R_lambda_G = R_lambda_G;
+thermal_inputs.A_G = A_G;
+thermal_inputs.test_names = {'closed wheel, top speed','open wheel, top speed'};
+thermal_results = thermal_check(gear, gear_geom, T_stall, omega_0, ...
+    thermal_inputs, crit, test_points);
 
 
 %% ========================================
-%          FINAL OUTPUT
-% ========================================
-
-fprintf('\n========================================\n');
-fprintf('          VEHICLE PERFORMANCE\n');
-fprintf('========================================\n');
-
-fprintf('\nWheel Closed:\n');
-fprintf('  Maximum Speed:           %.3f m/s\n',v_max_c);
-fprintf('  Maximum Speed:           %.3f km/h\n',v_max_c*3.6);
-fprintf('  Gear Torque:             %.3f N*m\n',T_c_closed);
-fprintf('  Gear Power:              %.3f W\n',P_c_closed);
-
-fprintf('\nWheel Open:\n');
-fprintf('  Maximum Speed:           %.3f m/s\n',v_max_o);
-fprintf('  Maximum Speed:           %.3f km/h\n',v_max_o*3.6);
-fprintf('  Gear Torque:             %.3f N*m\n',T_o_open);
-fprintf('  Gear Power:              %.3f W\n',P_o_open);
-
-
-fprintf('\n========================================\n');
-fprintf('          THERMAL CHECK\n');
-fprintf('========================================\n');
-
-fprintf('\nWheel Closed:\n');
-fprintf('  Sun-planet higher root/flank characteristic: %.2f deg C\n', ...
-    temp_results_c.T_sp);
-
-fprintf('  Planet-ring higher root/flank characteristic: %.2f deg C\n', ...
-    temp_results_c.T_rp);
-
-fprintf('  Highest characteristic temperature: %.2f deg C\n', ...
-    T_max_c);
-fprintf('  Root / flank characteristic maxima: %.2f / %.2f deg C\n', ...
-    temp_results_c.T_root_max,temp_results_c.T_flank_max);
-
-fprintf('\nWheel Open:\n');
-fprintf('  Sun-planet higher root/flank characteristic: %.2f deg C\n', ...
-    temp_results_o.T_sp);
-
-fprintf('  Planet-ring higher root/flank characteristic: %.2f deg C\n', ...
-    temp_results_o.T_rp);
-
-fprintf('  Highest characteristic temperature: %.2f deg C\n', ...
-    T_max_o);
-fprintf('  Root / flank characteristic maxima: %.2f / %.2f deg C\n', ...
-    temp_results_o.T_root_max,temp_results_o.T_flank_max);
-
-fprintf('\nHP PA12 HDT Reference:      %.2f deg C\n', ...
-    T_HDT_1p82);
-
-fprintf('\nMargin to HDT reference (screening only):\n');
-fprintf('  Closed:                   %.2f deg C\n', ...
-    thermal_margin_c);
-
-fprintf('  Open:                     %.2f deg C\n', ...
-    thermal_margin_o);
-
-fprintf('========================================\n');
-fprintf('\nStrength assessment: %s\n%s\n',strength_assessment.status, ...
-    strength_assessment.note);
-fprintf('\n=== Average flank-wear life estimate ===\n');
-fprintf('Coefficient: %.1f x 10^-6 mm^3/(N*m), provisional midpoint\n', ...
-    wear_life.k_w_1e6);
-fprintf('Operating profile: %.1f h/day, %.0f%% closed / %.0f%% open\n', ...
-    wear_life.hours_per_day,100*wear_life.duty.fraction_closed,100*wear_life.duty.fraction_open);
-fprintf('VDI allowable wear range: %.3f-%.3f mm\n', ...
-    wear_life.permissible_mm(1),wear_life.permissible_mm(2));
-fprintf('Governing life to 0.1*m_n: %.0f operating hours (%.1f calendar years), member=%s\n', ...
-    wear_life.governing_low_limit_hours,wear_life.governing_low_limit_years, ...
-    wear_life.governing_member_low_limit);
-fprintf('Governing life to 0.2*m_n: %.0f operating hours (%.1f calendar years), member=%s\n', ...
-    wear_life.governing_high_limit_hours,wear_life.governing_high_limit_years, ...
-    wear_life.governing_member_high_limit);
-fprintf('Cycles to the governing limits: %.3g-%.3g load cycles\n', ...
-    wear_life.members.(wear_life.governing_member_low_limit).N_L_to_Wzul_low, ...
-    wear_life.members.(wear_life.governing_member_high_limit).N_L_to_Wzul_high);
-fprintf('At %.0f operating hours (5-year target): within lower limit=%d, within upper limit=%d\n', ...
-    wear_life.design_hours,wear_life.within_5y_limit_low,wear_life.within_5y_limit_high);
-wear_member_names = {'sun','planet_sp','planet_rp','ring'};
-for iWear = 1:numel(wear_member_names)
-    wear_member = wear_life.members.(wear_member_names{iWear});
-    fprintf('  %-10s: %.3g cycles/h; life %.0f-%.0f h\n', ...
-        wear_member_names{iWear},wear_member.N_L_per_hour_mixed, ...
-        wear_member.life_to_Wzul_low_hours,wear_member.life_to_Wzul_high_hours);
-end
-
-fprintf('\n=== Dimensional tolerance / interference screen ===\n');
-fprintf('Tolerance entries are +/- half-widths in mm.\n');
-fprintf('Nominal backlash, sun-planet / planet-ring: %.4f / %.4f mm\n', ...
-    interference_cases.nominal.sun_planet_backlash_mm, ...
-    interference_cases.nominal.planet_ring_backlash_mm);
-fprintf('Maximum-interference stack, sun-planet: backlash %.4f mm; interference %.4f mm\n', ...
-    interference_cases.max_interference.sun_planet_backlash_mm, ...
-    interference_cases.max_interference.sun_planet_interference_mm);
-fprintf('Maximum-interference stack, planet-ring: backlash %.4f mm; interference %.4f mm\n', ...
-    interference_cases.max_interference.planet_ring_backlash_mm, ...
-    interference_cases.max_interference.planet_ring_interference_mm);
-fprintf('Minimum-interference stack, sun-planet: backlash %.4f mm; interference %.4f mm\n', ...
-    interference_cases.min_interference.sun_planet_backlash_mm, ...
-    interference_cases.min_interference.sun_planet_interference_mm);
-fprintf('Minimum-interference stack, planet-ring: backlash %.4f mm; interference %.4f mm\n', ...
-    interference_cases.min_interference.planet_ring_backlash_mm, ...
-    interference_cases.min_interference.planet_ring_interference_mm);
-fprintf('%s\n',interference_cases.status);
-
-
-
-%% ========================================
-%          PERFORMANCE / FAILURE SUMMARY
+%          OUTPUT: PASS/FAIL CHECKS
 % ========================================
 
 fprintf('\n\n========================================\n');
-fprintf('       PERFORMANCE / FAILURE SUMMARY\n');
+fprintf('   RESEARCH-USE CHECKS (pass/fail)\n');
 fprintf('========================================\n');
 
-% Summarize both operating configurations.
-config_names = {'CLOSED','OPEN'};
-config_speeds = [v_max_c, v_max_o];
-config_temps = [T_max_c, T_max_o];
-config_thermal_margins = [thermal_margin_c, thermal_margin_o];
-config_safety = {safety_results_c, safety_results_o};
-config_vdi = {vdi_results_c, vdi_results_o};
-config_gear = {gear_results_c, gear_results_o};
-config_temp = {temp_results_c, temp_results_o};
+pf = {'FAIL','PASS'};
 
-for iConfig = 1:2
+fprintf('\n1) STATIC STRENGTH AT MOTOR STALL (VDI 2736-2 Sec. 3.3)\n');
+fprintf('   Carrier torque %.2f N*m -> sun %.3f N*m, %.1f N per planet\n', ...
+    static_results.T_c_peak, static_results.T_s_peak, static_results.F_t_sp);
+fprintf('   %-32s %9s %9s %7s\n','member','stress','allow','margin');
+for i = 1:numel(static_results.root.sigma)
+    fprintf('   %-32s %6.1f MPa %6.1f MPa %6.2fx  %s\n', static_results.root.names{i}, ...
+        static_results.root.sigma(i)/1e6, static_results.root.allow(i)/1e6, ...
+        static_results.root.margin(i), pf{static_results.root.pass(i)+1});
+end
+for i = 1:numel(static_results.flank.sigma)
+    fprintf('   %-32s %6.1f MPa %6.1f MPa %6.2fx  %s\n', static_results.flank.names{i}, ...
+        static_results.flank.sigma(i)/1e6, static_results.flank.allow(i)/1e6, ...
+        static_results.flank.margin(i), static_results.flank.status{i});
+end
+fprintf('   Root allow: PA12 2.0*sigma_S/S_Smin, steel sigma_y/S_Smin; S_Smin = %.1f\n', ...
+    static_results.S_Smin);
+fprintf(['   Flank allow: 1.67*sigma_S/S_Smin (project screen). MARGINAL = under first\n' ...
+    '   yield (%.0f MPa) but inside the safety factor: may mark the flank, won''t break.\n'], ...
+    static_results.flank.first_yield(1)/1e6);
+fprintf('   Tooth deflection at stall: %.1f / %.1f um (VDI guide %.0f um, info only)\n', ...
+    static_results.lambda(1)*1e6, static_results.lambda(2)*1e6, static_results.lambda_zul*1e6);
+fprintf('   -> %s\n', static_results.status);
 
-    fprintf('\n--- WHEEL %s ---\n',config_names{iConfig});
-
-    fprintf('Vehicle speed:              %.3f m/s (%.2f km/h)\n', ...
-        config_speeds(iConfig),3.6*config_speeds(iConfig));
-
-    fprintf('Peak modeled gear temp:     %.2f deg C\n', ...
-        config_temps(iConfig));
-
-    fprintf('Margin to 95 C HDT screen:  %+.2f deg C\n', ...
-        config_thermal_margins(iConfig));
-
-    % Identify the hottest mesh and characteristic.
-    tr = config_temp{iConfig};
-
-    if tr.T_rp >= tr.T_sp
-        hot_mesh = 'planet-ring';
-        hot_mesh_temp = tr.T_rp;
-    else
-        hot_mesh = 'sun-planet';
-        hot_mesh_temp = tr.T_sp;
-    end
-
-    fprintf('Hottest mesh:               %s (%.2f deg C)\n', ...
-        hot_mesh,hot_mesh_temp);
-
-    % Report the minimum static safety factors, if provided by gear_safety.
-    sr = config_safety{iConfig};
-
-    fprintf('Strength/fatigue assessment: %s\n', ...
-        strength_assessment.status);
-
-    % Show available numeric safety-factor fields without assuming
-    % specific field names in gear_safety's output structure.
-    sf_names = fieldnames(sr);
-    found_sf = false;
-
-    for iField = 1:numel(sf_names)
-        field_name = sf_names{iField};
-        field_value = sr.(field_name);
-
-        if isnumeric(field_value) && isscalar(field_value) && ...
-                isfinite(field_value) && ...
-                contains(lower(field_name),'safety') && ...
-                contains(lower(field_name),'factor')
-
-            fprintf('  %-28s %.3f\n',field_name,field_value);
-            found_sf = true;
-        end
-    end
-
-    if ~found_sf
-        fprintf(['  No field named with both "safety" and "factor" ' ...
-            'was found in gear_safety output.\n']);
-    end
-
-    % Report provisional root-fatigue and flank-fatigue status.
-    if iConfig == 1
-        fprintf('Root fatigue status:        %s\n', ...
-            safety_results_c.root_fatigue_status);
-    else
-        fprintf('Root fatigue status:        %s\n', ...
-            safety_results_o.root_fatigue_status);
-    end
-
-    fprintf('Flank fatigue status:       %s\n', ...
-        strength_assessment.flank_fatigue_status);
-
+fprintf('\n2) PA12 TEMPERATURE DURING A TEST (gears running the whole test, ED = 1)\n');
+for k = 1:numel(thermal_results.tests)
+    tk = thermal_results.tests(k);
+    fprintf('   %-26s %4.0f rpm %5.2f N*m  flank %5.1f C, body %5.1f C  %s\n', tk.name, ...
+        tk.omega_c*60/(2*pi), tk.T_c, tk.T_max, tk.T_root, tk.status);
+end
+fprintf('   Limits: Tg %.0f C (CAUTION above), HDT %.0f C (FAIL above), melt %.0f C\n', ...
+    thermal_results.T_soft, thermal_results.T_limit, thermal_results.T_melt);
+fprintf(['   Graded on flank (surface, VDI Eq. 9); body = root temperature (Eq. 7).\n' ...
+    '   VDI steady-state values, so a short test runs cooler than this.\n']);
+fprintf('   -> %s\n', thermal_results.status);
+fprintf(['   Warning, whole motor line: hottest flank %.0f C (body %.0f C)\n' ...
+    '   at %.0f rpm / %.2f N*m (%s).\n'], ...
+    thermal_results.env.T_max, thermal_results.env.T_root_at_max, ...
+    thermal_results.env.carrier_rpm, thermal_results.env.T_c, thermal_results.env.status);
+if ~isempty(thermal_results.env.over_HDT_rpm)
+    fprintf(['   Running continuously between %.0f and %.0f carrier rpm on the motor line\n' ...
+        '   (pushing near stall) would go over HDT. Keep those moments short.\n'], ...
+        thermal_results.env.over_HDT_rpm(1), thermal_results.env.over_HDT_rpm(2));
 end
 
-%% Overall screening result
-fprintf('\n--- OVERALL LIMITING CONDITION ---\n');
+overall_ok = static_results.pass && thermal_results.pass;
+fprintf('\nOVERALL: %s', pf{overall_ok+1});
+flags = {};
+if strcmp(static_results.status,'MARGINAL'), flags{end+1} = 'flank marginal at stall'; end
+if strcmp(thermal_results.status,'CAUTION'), flags{end+1} = 'PA12 above Tg during tests'; end
+if ~isempty(flags), fprintf(' (%s)', strjoin(flags,'; ')); end
+fprintf('\n');
 
-[worst_temp,idx_worst] = max(config_temps);
-worst_margin = config_thermal_margins(idx_worst);
 
-fprintf('Thermally hottest configuration: %s\n', ...
-    config_names{idx_worst});
-fprintf('Predicted peak temperature:       %.2f deg C\n',worst_temp);
-fprintf('Margin to 95 C HDT reference:     %+.2f deg C\n',worst_margin);
+%% ========================================
+%          OUTPUT: REFERENCE ONLY
+% ========================================
 
-if worst_margin < 0
-    fprintf(['Thermal screen: ABOVE the 95 C HDT reference by ' ...
-        '%.2f deg C.\n'],abs(worst_margin));
-else
-    fprintf(['Thermal screen: BELOW the 95 C HDT reference by ' ...
-        '%.2f deg C.\n'],worst_margin);
-end
-
-fprintf(['Note: HDT is a screening reference, not a validated ' ...
-    'continuous-use temperature limit.\n']);
-fprintf(['Root fatigue uses provisional coupon runout data; ' ...
-    'flank fatigue life is unassessed.\n']);
-fprintf(['The first physical failure mode cannot be established ' ...
-    'unless all relevant limits and allowables are defined.\n']);
+fprintf('\n\n========================================\n');
+fprintf('   REFERENCE ONLY (not pass/fail)\n');
 fprintf('========================================\n');
+
+fprintf('\nNominal operating points (max steady speed on the motor line):\n');
+fprintf('   %-30s %10s %10s\n','','closed','open');
+fprintf('   %-30s %10.3f %10.3f\n','vehicle speed [m/s]',v_max_c,v_max_o);
+fprintf('   %-30s %10.1f %10.1f\n','carrier [rpm]', ...
+    omega_c_closed*60/(2*pi),omega_o_open*60/(2*pi));
+fprintf('   %-30s %10.3f %10.3f\n','carrier torque [N*m]',T_c_closed,T_o_open);
+fprintf('   %-30s %10.2f %10.2f\n','carrier power [W]',P_c_closed,P_o_open);
+fprintf('   %-30s %10.1f %10.1f\n','sun [rpm]', ...
+    abs(gear_results_c.omega_s)*60/(2*pi),abs(gear_results_o.omega_s)*60/(2*pi));
+fprintf('   %-30s %10.3f %10.3f\n','mesh speed, carrier frame [m/s]', ...
+    vdi_results_c.v_sp,vdi_results_o.v_sp);
+fprintf('   %-30s %10.2f %10.2f\n','force per planet [N]', ...
+    vdi_results_c.F_t_sp,vdi_results_o.F_t_sp);
+fprintf('   %-30s %10.2f %10.2f\n','max root stress [MPa]', ...
+    vdi_results_c.system.sigma_F_max/1e6,vdi_results_o.system.sigma_F_max/1e6);
+fprintf('   %-30s %10.2f %10.2f\n','max flank stress [MPa]', ...
+    vdi_results_c.system.sigma_H_max/1e6,vdi_results_o.system.sigma_H_max/1e6);
+fprintf('   %-30s %10.1f %10.1f\n',sprintf('max temp at ED = %.2f [C]',ED), ...
+    temp_results_c.T_max,temp_results_o.T_max);
+fprintf('   Assumes K_A = %.2f, mu = %.2f, ambient %.0f C, open housing\n', ...
+    gear.K_A, mu_gear, T_ambient);
+
+fprintf('\nWear life (VDI Eq. 19/21):\n');
+fprintf('   k_w = %.0f x 10^-6 mm^3/(N*m) (printed PA12 on steel, range ~50-500)\n', ...
+    wear_life.k_w_1e6);
+fprintf('   Duty: %.0f%% closed / %.0f%% open at the nominal points above\n', ...
+    100*wear_life.duty.fraction_closed,100*wear_life.duty.fraction_open);
+fprintf('   Running hours to 0.1*m / 0.2*m wear: %.0f / %.0f h (%s governs)\n', ...
+    wear_life.governing_low_limit_hours,wear_life.governing_high_limit_hours, ...
+    wear_life.governing_member_low_limit);
+wear_member_names = {'sun','ring'};
+for iWear = 1:numel(wear_member_names)
+    wm = wear_life.members.(wear_member_names{iWear});
+    fprintf('     %-5s %.3g load cycles/h, %.0f-%.0f h\n', wear_member_names{iWear}, ...
+        wm.N_L_per_hour_mixed, wm.life_to_Wzul_low_hours, wm.life_to_Wzul_high_hours);
+end
+fprintf('   Life scales as 1/k_w and roughly 1/torque.\n');
+
+fprintf('\nRoot fatigue (PA12, nominal points):\n');
+fprintf('   %s\n', safety_results_o.root_fatigue_status);
+fprintf('   Coupon runout %.0f MPa at %.0e cycles vs max PA12 root %.1f MPa\n', ...
+    fatigue_data.runout_stress_Pa/1e6, fatigue_data.runout_cycles, ...
+    max(vdi_results_o.sun_planet.root.sun.sigma_F, ...
+        vdi_results_o.planet_ring.root.ring.sigma_F)/1e6);
+
+fprintf('\n=== Dimensional tolerance / interference screen ===\n');
+fprintf('Nominal backlash, sun-planet / planet-ring: %.4f / %.4f mm\n', ...
+    interference_cases.nominal.sun_planet_backlash_mm, ...
+    interference_cases.nominal.planet_ring_backlash_mm);
+fprintf('%s\n',interference_cases.status);
+fprintf('========================================\n');
+
+
 %% WHEEL SPEED FROM CARRIER RPM
 
 % Convert carrier angular velocity to RPM
