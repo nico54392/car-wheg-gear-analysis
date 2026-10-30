@@ -11,7 +11,7 @@ Last updated 2026-10-30: research-use pass/fail criteria added. VDI 2736 Blatt 2
 | Force per planet, reference d | 6.20 N | 10.69 N | VDI Eq. (2) |
 | Root stress, sun / planet (sp mesh) | 3.32 MPa | 5.72 MPa | same value: YFa/YSa are shared placeholders |
 | Root stress, planet / ring (rp mesh) | 3.02 / 1.99 MPa | 5.20 / 3.42 MPa | |
-| Flank stress sp / rp | 18.82 / 11.75 MPa | 24.71 / 15.42 MPa | |
+| Flank stress sp / rp | 18.66 / 11.64 MPa | 24.49 / 15.28 MPa | |
 | Contact ratio sp / rp | 1.331 / 1.532 | same | |
 | Max characteristic temperature | 38.4 °C | 47.8 °C | sun flank, Eq. (9) |
 | Deformation λ / λ_zul | ~4 % | ~7 % | Eq. (22) |
@@ -37,8 +37,8 @@ Wear and fatigue life are **reference only**, printed with the operating conditi
 | Sun root at stall | 40.4 / 64.0 MPa | PASS 1.58× |
 | Ring root at stall | 24.2 / 64.0 MPa | PASS 2.65× |
 | Steel planet roots at stall | 40.4, 36.8 / 136.7 MPa | PASS |
-| Sun-planet flank at stall | 65.7 MPa vs 53.4 screen, 80 first yield | MARGINAL |
-| Planet-ring flank at stall | 41.0 / 53.4 MPa | PASS |
+| Sun-planet flank at stall | 65.1 MPa vs 53.4 screen, 80 first yield | MARGINAL |
+| Planet-ring flank at stall | 40.6 / 53.4 MPa | PASS |
 | Flank / body temp, closed top speed, ED = 1 | 54 / 29 °C | CAUTION |
 | Flank / body temp, open top speed, ED = 1 | 74 / 32 °C | CAUTION |
 | Motor-line envelope | flank over HDT if held at 3–139 carrier rpm for long | warning |
@@ -129,7 +129,7 @@ ZH (DIN 3990-2 form), (22) and λ_zul = 0.07·m, Table 3 k_θ for plastic/steel,
 
 | Assumption | Value | Where | Basis |
 |---|---|---|---|
-| Sun, ring | HP MJF PA12, E 1.7 GPa XY (HP-TFS; HP-DS says 1.8), ν 0.47 (NR-est; measured 0.40, FAES) | `main.m` | room-temperature E (VDI wants E at gear temperature) |
+| Sun, ring | HP MJF PA12, E 1.8 GPa (HP-DS), ν 0.40 (FAES) | `main.m` | room-temperature E (VDI wants E at gear temperature) |
 | Planets | stainless steel, E 193 GPa, σ_y 205 MPa | `main.m` | 304 assumed, TN304; grade not confirmed; outside VDI 2736 scope |
 | Static references | flexural 65 MPa (root); tensile 48 MPa | `gear_safety.m` | HP-DS; screening only, no safety factor |
 | Root fatigue | 25 MPa runout at 10⁷ cycles | `main.m` | TA (EF037) SLS PA12 coupons, not gear data, no temperature correction |
