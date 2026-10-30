@@ -1,28 +1,19 @@
 function K_F = KF(gear_results, gear)
-% KF
-% VDI 2736 tooth-root load factor for thermoplastic gears.
+% KF  VDI 2736 Blatt 2 tooth-root load factor for thermoplastic gears.
 %
-% For b/m <= 12, VDI 2736 permits a simplified empirical
-% range of approximately 1.0 to 1.25.
+% VDI 2736-2 (p. 11): K_F = K_A*K_v*K_beta*K_alpha, and for b/m <= 12 the
+% standard simplifies this to K_F ~ K_A because of the plastic's elasticity.
+% So this just returns gear.K_A. Any extra conservatism belongs in K_A
+% (set in main.m), not hidden here.
 %
-% ASSUMPTION:
-% K_F = 1.25 is the conservative simplified VDI 2736 value.
-% This does not explicitly model planetary load sharing.
+% Equal planet load sharing is assumed elsewhere; this factor does not
+% cover planet-to-planet load imbalance.
 
-%% Gear proportions
-
-m = gear.mod;       % [mm]
-b = gear.b_p;       % [mm]
-
-b_over_m = b / m;
-
-%% VDI 2736 simplified load factor
-
-if b_over_m <= 12
-    K_F = 1.25;
-else
-    error('KF: b/m = %.2f exceeds the simplified VDI 2736 range.', ...
-        b_over_m);
+b_over_m = gear.b_p / gear.mod;
+if b_over_m > 12
+    error('KF: b/m = %.2f exceeds the b/m <= 12 range of the VDI simplification.', b_over_m);
 end
+
+K_F = gear.K_A;
 
 end

@@ -125,8 +125,13 @@ end
 if gear_results.N_p_planets ~= N_p_planets
     error('Planet count differs between gear and planetary results.');
 end
-F_t_sp = abs(gear_results.F_t_s_planet);
-F_t_rp = abs(gear_results.F_t_r_planet);
+% VDI Eq. (2)/(10): rating force is taken at the REFERENCE diameter d,
+% not the working pitch diameter. planetary_gear returns the working-circle
+% force, which is kept for mesh power (F_w*v_w = F_ref*v_ref anyway).
+F_t_sp_w = abs(gear_results.F_t_s_planet);
+F_t_rp_w = abs(gear_results.F_t_r_planet);
+F_t_sp = abs(T_s)/geom.r_s_m/N_p_planets;
+F_t_rp = abs(T_r)/geom.r_r_m/N_p_planets;
 
 % Total tangential force across all planets.
 
@@ -207,12 +212,18 @@ x_r = gear.x_r1;
 % External gear:
 %   da = d + 2*m*(1+x)
 %
-% Internal gear:
-%   da = d - 2*m*(1+x)
+% Internal gear (same convention as geometry_calc, where the internal
+% mesh shift sum is x_r - x_p):
+%   da = d - 2*m*(1-x)
 
 r_as = r_s + m_n*(1 + x_s);
 r_ap = r_p + m_n*(1 + x_p);
-r_ar = r_r - m_n*(1 + x_r);
+r_ar = r_r - m_n*(1 - x_r);
+
+if r_ar <= r_br
+    error('Ring tip circle (%.3f mm) is inside its base circle (%.3f mm).', ...
+        r_ar*1e3, r_br*1e3);
+end
 
 
 %% ========================================
@@ -229,8 +240,10 @@ alpha_wt_sp = acos(max(-1,min(1,arg_wt_sp)));
 pb_t = pi*m_n*cos(alpha_t);
 A_s = sqrt(max(r_as^2-r_bs^2,0));
 A_p = sqrt(max(r_ap^2-r_bp^2,0));
-epsilon1_sp = (A_s-r_s*sin(alpha_wt_sp))/pb_t;
-epsilon2_sp = (A_p-r_p*sin(alpha_wt_sp))/pb_t;
+% VDI 2736-2 p.22: eps_i = z_i/(2*pi)*(sqrt((d_a/d_b)^2-1) - tan(alpha_wt))
+% i.e. (sqrt(r_a^2-r_b^2) - r_b*tan(alpha_wt))/p_bt
+epsilon1_sp = (A_s-r_bs*tan(alpha_wt_sp))/pb_t;
+epsilon2_sp = (A_p-r_bp*tan(alpha_wt_sp))/pb_t;
 epsilon_alpha_sp = epsilon1_sp + epsilon2_sp;
 
 
@@ -246,8 +259,8 @@ if abs(arg_wt_rp) > 1+1e-10
 end
 alpha_wt_rp = acos(max(-1,min(1,arg_wt_rp)));
 A_r = sqrt(max(r_ar^2-r_br^2,0));
-epsilon1_rp = (A_p-r_p*sin(alpha_wt_rp))/pb_t;
-epsilon2_rp = (r_r*sin(alpha_wt_rp)-A_r)/pb_t;
+epsilon1_rp = (A_p-r_bp*tan(alpha_wt_rp))/pb_t;
+epsilon2_rp = (r_br*tan(alpha_wt_rp)-A_r)/pb_t;
 epsilon_alpha_rp = epsilon1_rp + epsilon2_rp;
 
 if any([epsilon1_sp,epsilon2_sp,epsilon1_rp,epsilon2_rp] < 0)
@@ -456,7 +469,7 @@ sigma_H_rp = ...
     Zbeta_rp * ...
     sqrt( ...
         (F_t_rp*K_H_rp)/(b_rp*D_p) * ...
-        ((u_rp+1)/u_rp));
+        ((u_rp-1)/u_rp));   % internal mesh: u is negative in DIN 3990, so (u+1)/u -> (|u|-1)/|u|
 
 
 %% ========================================
@@ -483,11 +496,11 @@ lambda_rp = ...
 % Mesh power is calculated using relative pitch-line
 % velocity, not absolute gear velocity.
 
-P_sp = F_t_sp * v_sp;
-P_rp = F_t_rp * v_rp;
+P_sp = F_t_sp_w * v_sp;
+P_rp = F_t_rp_w * v_rp;
 
-P_sp_total = F_t_sp_total * v_sp;
-P_rp_total = F_t_rp_total * v_rp;
+P_sp_total = N_p_planets * P_sp;
+P_rp_total = N_p_planets * P_rp;
 
 
 %% ========================================
@@ -532,11 +545,20 @@ H_V_sp = ...
     (1 - epsilon1_sp - epsilon2_sp + ...
      epsilon1_sp^2 + epsilon2_sp^2);
 
+% Internal mesh: same DIN sign convention as sigma_H -> (|u|-1).
 H_V_rp = ...
-    pi*(u_rp + 1) / ...
+    pi*(u_rp - 1) / ...
     (z2_rp*cos(beta)) * ...
     (1 - epsilon1_rp - epsilon2_rp + ...
      epsilon1_rp^2 + epsilon2_rp^2);
+
+
+% VDI Eq. (8) is only stated for 1 <= eps_alpha <= 2.
+for eps_chk = [epsilon_alpha_sp, epsilon_alpha_rp]
+    if eps_chk < 1 || eps_chk > 2
+        warning('eps_alpha = %.3f is outside the 1..2 range of VDI Eq. (8) for H_V.', eps_chk);
+    end
+end
 
 
 %% ========================================

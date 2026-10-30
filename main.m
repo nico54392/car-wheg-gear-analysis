@@ -142,8 +142,7 @@ T_HDT_0p45 = 175;                         % [deg C]
 %          THERMAL PARAMETERS
 % ========================================
 
-mu_gear = 0.28;                          % [-], VDI 2736 Blatt 2 Table 2 dry PA/PA assumption
-mu_gear = 0.129;
+mu_gear = 0.20;                          % [-], VDI 2736-2 Table 2, dry plastic/steel (PA12 sun & ring vs steel planets)
 k_theta_root = 900;                      % [K*(m/s)^0.75*mm^1.75], VDI Table 3 dry plastic/steel
 k_theta_flank = 6300;                    % [K*(m/s)^0.75*mm^1.75], VDI Table 3 dry plastic/steel
 
@@ -208,7 +207,8 @@ gear.D_q = D_q;
 
 % Gear operating parameters
 
-gear.K_A = 1.0;
+gear.K_A = 1.25;                         % [-], VDI 2736-2 p.7: K_A ~ 1...1.25 for electric-motor drives.
+                                         % Upper end kept for conservatism. KF/KH return K_A (VDI p.11/17, b/m<=12).
 gear.Q = 9;
 
 

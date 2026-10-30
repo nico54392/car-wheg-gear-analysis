@@ -1,63 +1,43 @@
 EQUATION AND STANDARD SOURCES
-Project: CAR Gearbox MATLAB model
-Primary standard PDF on the user's computer: C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt - PLASTIC GEAR CRITERIA.pdf
-Page numbers below are printed page numbers in that PDF. Verify exact edition, clause, and equation against the scanned document before design release.
+Project: CAR wheg planetary gearbox, MATLAB model
+Updated 2026-10-28 after the VDI audit. Page numbers are printed pages in:
+C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt 2 - PLASTIC GEAR CRITERIA.pdf (2014)
 
-| Function / equation | Source indicated or intended | Implementation status / qualification |
+| Function | Equation / source | Status |
 |---|---|---|
-| planetary_gear.m: fixed-ring planetary speed relation, torque balance, mesh forces | Classical planetary kinematics (Willis relation) and equilibrium | Project mechanics; not a VDI strength equation. Three-planet equal sharing divides total tangential load by 3 for one-planet stress. Hardware load equality is assumed, not proven |
-| geometry_calc.m: pitch diameters, radii, center distance, closure/phasing | Basic gear geometry from module and tooth counts | Central shared pitch geometry; derived geometry only. Generic addendum/dedendum fields do not generate or verify shifted tooth flanks |
-| vdi2736.m: root stress, Method C | VDI 2736 Blatt 2 Eq. (10), printed p. 11 | Intended Method C. Uses per-planet force. Manual audit needed for factor inputs and common simplified root geometry |
-| YFa.m: tooth-form factor | DIN 3990-derived/general tooth-form relation (source attribution in code says DIN 3990 Method C / VDI 2736) | Do not claim this exact equation is confirmed as printed in the supplied VDI PDF. Audit equation provenance and actual tooth-specific h_Fa, s_Fn, alpha_Fan |
-| YSa.m: external tooth root stress correction | DIN 3990-3 analytic YSa equation | External tooth use only with valid geometry. Not established as a VDI 2736 equation |
-| YSa.m: internal ring | Project approximation using same DIN 3990-3 equation | VDI 2736 points internal gearing to VDI 2737; current code does not apply VDI 2737 rim influence/internal-specific correction. Explicitly unverified approximation |
-| Yepsilon.m: bending contact-ratio factor | VDI 2736 Blatt 2, root calculation factor; see Eq. (10), p. 11 | Implemented as 0.25+0.75/epsilon_alpha; confirm notation/range in supplied edition |
-| Ybeta.m: helix factor | VDI 2736 spur case | Returns 1 only for beta=0; nonzero helix unsupported |
-| KF.m: root load factor | VDI 2736 simplified empirical range cited in code, b/m<=12 | Code fixes K_F=1.25. This is a selected conservative endpoint, not derived from load measurements; it does not correct unequal planet sharing |
-| vdi2736.m: flank/contact stress | VDI 2736 Blatt 2 Eq. (14), printed p. 15 | Intended Method C; uses per-planet mesh force. Audit factor definitions and internal ring treatment |
-| ZE.m: elastic coefficient | VDI 2736 Blatt 2 Eq. (15), printed p. 15 | Standard elastic-contact relation; E and nu are project material inputs |
-| Zepsilon.m: flank contact-ratio factor | VDI 2736 Blatt 2 Eq. (16), printed p. 15 | epsilon_beta<1 branch implemented; epsilon_beta>=1 deliberately errors/unimplemented |
-| ZH.m: contact zone factor | ISO 6336-2:2006 Eq. (16) form; VDI 2736 Blatt 2 printed p. 16 identifies DIN 3990-derived factor | Only this factor's relation is borrowed. Does not make the full assessment an ISO rating; not an undercut factor |
-| Zbeta.m: helix factor | VDI 2736 spur case | Returns 1 only for beta=0; nonzero helix unsupported |
-| KH.m: flank load factor | VDI 2736 simplified empirical range cited in code, b/m<=12 | Code fixes K_H=1.25, selected endpoint. Confirm standard's exact conditions and factor mapping |
-| vdi2736_root_temperature.m / gear_temperature.m: tooth-root temperature | VDI 2736 Blatt 2 Eq. (7), printed pp. 8-9 (check exact page/equation in local PDF) | Uses loss/thermal inputs; inspect units, duty interpretation, and member-specific application |
-| vdi2736_flank_temperature.m / gear_temperature.m: flank temperature | VDI 2736 Blatt 2 Eq. (9), printed pp. 9-10 (check exact page/equation in local PDF) | Thermal implementation requires exact VDI constants/material case and the system-vs-per-mesh loss basis to be audited |
-| vdi2736.m: system loss aggregation | Three parallel mesh paths; one-planet loss x 3 | Planet count is applied to system heat totals. Do not multiply single-planet stress force; do not multiply losses twice |
-| gear_wear.m: average wear | VDI 2736 Blatt 2 Eqs. (19) and (21) | Average wear only. Local sliding wear intentionally excluded. Uses provisional k_w from Odrobina thesis, assumed l_FI=2m_n unless supplied, and 50/50 mode split. Not validated outside reported PV/material condition |
-| gear_wear.m: cycles/service hours | Relative member/mesh kinematics plus 3-planet engagement count; user's 3 h/day, 365 day/year, 5 year schedule | Project conversion logic; validate planet-pass counting and specific member cycle definition during audit |
-| gear_safety.m: root/flank static utilization and root fatigue screen | Project ratio for static screen; TA EF037 PA12 tensile-coupon runout floor (25 MPa, 10^7 cycles) projected below that stress for root bending | Static ratios remain screening only. Root >=10^7 cycles is an assumed runout lower-bound projection, not a gear failure-life prediction; no temperature correction. Flank contact fatigue remains unassessed |
-| gear_safety.m: deformation screen | VDI 2736 Blatt 2 deformation limit, lambda_zul=0.07m_n, printed p. 20 (as recorded in project) | Verify exact clause and applicability in local PDF |
-| pa12_temperature_factor.m | No VDI equation; project calibration/interpolation interface | Returns unassessed without measured calibration. Not currently applied as a PA12 temperature factor |
+| planetary_gear.m | Willis relation, torque and power balance | Project mechanics. Forces at working circle; 3 planets, equal share |
+| geometry_calc.m | inv(a_w) = inv(a) + 2 tan(a) (x1+x2)/(z1+z2); internal uses x_r-x_p and z_r-z_p; VDI p.22 | Checked. Tip circles nominal, no tip shortening |
+| vdi2736.m contact ratio | VDI p.22, eps_i = z_i/(2 pi) (sqrt((d_a/d_b)^2-1) - tan a_wt) | Fixed 2026-10-28 (was r sin a_wt; ring tip sign was wrong) |
+| vdi2736.m rating force | VDI Eq. 2, F_t = T/(d/2) at reference d | Fixed 2026-10-28 (was working circle) |
+| vdi2736.m root stress | VDI Eq. 10, p.11 | Form checked |
+| YFa.m | DIN 3990-3 form, allowed by VDI p.12 footnote 5 | Formula fine; inputs are placeholders (same for every gear) |
+| Ring YFa = 2.0 | VDI p.11 | Checked |
+| YSa.m | DIN 3990-3, allowed by VDI p.13 footnote 6 | External OK with real geometry; ring should use VDI 2737 |
+| Yepsilon.m | VDI Eq. 11, p.13 | Checked |
+| Ybeta.m, Zbeta.m | VDI Eq. 12 / p.17, spur -> 1 | Checked for beta = 0 |
+| KF.m, KH.m | VDI p.11 / p.17: K_F ~ K_H ~ K_A for b/m <= 12 | Fixed 2026-10-28: now return gear.K_A |
+| vdi2736.m flank stress | VDI Eq. 14, p.15 | Checked; internal mesh now (u-1)/u |
+| ZE.m | VDI Eq. 15 | Checked |
+| ZH.m | DIN 3990-2 / ISO 6336-2 Eq. 16 form, allowed by VDI p.16 footnote 10 | Checked |
+| Zepsilon.m | VDI Eq. 16 | Checked (eps_beta >= 1 branch not needed for spur) |
+| vdi2736.m H_V | VDI Eq. 8, p.10, valid 1 <= eps_a <= 2 | Checked; internal mesh now (u-1); range warning added |
+| vdi2736.m deformation | VDI Eq. 22, lambda_zul = 0.07 m, p.20 | Checked (E should be at root temperature; uses 25 C value) |
+| vdi2736_root_temperature.m | VDI Eq. 7, p.8 | Checked, incl. ED^0.64 and units |
+| vdi2736_flank_temperature.m | VDI Eq. 9, p.10 | Checked |
+| gear_temperature.m | Eq. 7 / 9 applied per member; sun/ring take 3 meshes' power | Project extension of the single-pair equations |
+| gear_wear.m | VDI Eq. 19 and 21, p.19; l_Fl = 2 m footnote | Average wear only; k_w provisional |
+| gear_safety.m | Project static ratios + TA EF037 runout | NOT the VDI check. VDI uses Eq. 13 (sigma_FP = 2.0 sigma_FlimN / S_Fmin) and Eq. 17 (sigma_HP) |
+| Not implemented | VDI §3.3 peak load (Eq. 23/24), §3.4 efficiency | Open |
 
-IMPORTANT SCOPE NOTES
-- VDI 2736 Blatt 2 Method C is the intended calculation method. Do not replace with Method B equations.
-- Equal sharing means total mesh force divided by 3 for per-planet tooth stress. Aggregate each planet-path loss x 3 for system heat only; check that input is per-path before aggregation.
-- Generic root geometry in vdi2736.m (s_Fn=pi*m_n/2, h_Fa=1.25m_n, rho_F=0.38m_n) is not an actual profile calculation and omits the proposed positive profile shifts.
-- The internal ring's YSa is explicitly an approximation; VDI 2737 equations have not been implemented.
-- No applicable SLS PA12 gear S-N curve is incorporated. The paper with DOI 10.1177/14644207221074902 is pending user-provided copy/data and is not yet a source for calculated life.
-- User-reported 30.4 MPa root stress, 40.4 MPa flank pressure, and ~49 deg C are not validated by these source notes; verify against an executed current model/configuration before quoting as reproduced results.
+LOCAL PDFS (Engineering Resources folder)
+- Vdi2736-Blatt 2 - PLASTIC GEAR CRITERIA.pdf: all equations above
+- Vdi2736-Blatt-1.pdf: materials, design, permissible temperatures
+- ISO-6336-2-2006  - GEARS.pdf: ZH form
+- DIN 3390 Eqs.pdf: DIN 3990 notes for YFa / YSa (filename typo, it's DIN 3990)
+- PLA Nylon Gear Study.pdf, TechnicalData_KGSTOCKGEARS.pdf: background only
 
-PDF SOURCE INDEX (exact filenames and full locations)
-1. VDI 2736 Blatt 2 — “Vdi2736-Blatt 2 - PLASTIC GEAR CRITERIA.pdf”
-   C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt 2 - PLASTIC GEAR CRITERIA.pdf
-   Intended Method C and cited thermal Eqs. 7/9, root Eq. 10, contact Eqs. 14-16, wear Eqs. 19/21, and deformation reference. Confirm equation/page details against this edition.
-2. DIN equation notes — “DIN 3390 Eqs.pdf”
-   C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\DIN 3390 Eqs.pdf
-   Relevant to YFa/YSa provenance. Filename says 3390 while MATLAB comments cite DIN 3990/3990-3; verify document identity and equation before claiming exact source.
-3. ISO 6336-2:2006 — “ISO-6336-2-2006  - GEARS.pdf”
-   C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\ISO-6336-2-2006  - GEARS.pdf
-   Source reference for ZH relation (ISO Eq. 16 form). This one factor does not make the whole assessment an ISO rating.
-4. VDI 2736 Blatt 1 — “Vdi2736-Blatt-1.pdf”
-   C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\Vdi2736-Blatt-1.pdf
-   Present in library; current gear-capacity equations are attributed to Blatt 2, not Blatt 1.
-5. Odrobina thesis — no local PDF found in checked source folders.
-   Online PDF: https://phd.mater.uni-mate.hu/409/11/odrobina_miklos_thesis_DOI.pdf
-   Provisional wear-coefficient research source; not a VDI tabulated value.
-6. SLS PA12 gear single-tooth bending-fatigue study — DOI 10.1177/14644207221074902; no local PDF found in checked source folders. User is locating it. Not yet used to derive fatigue life.
-7. “PLA Nylon Gear Study.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\PLA Nylon Gear Study.pdf. Candidate reference only; not attributed to active PA12 inputs/equations without checking contents.
-8. “TechnicalData_KGSTOCKGEARS.pdf” — C:\Users\nico5\OneDrive\Documents\Textbooks\Engineering Resources\TechnicalData_KGSTOCKGEARS.pdf. General gear technical reference; not the VDI source.
-
-PA12 FATIGUE PDF CURRENTLY USED FOR A LIMITED ROOT SCREEN
-TA Instruments EF037, “Tensile and Fatigue Properties of Additively Manufactured Polyamides.” PDF filename: EF037.pdf. Direct PDF: https://www.tainstruments.com/pdf/literature/EF037.pdf. Source page: https://www.tainstruments.com/applications-notes/tensile-and-fatigue-properties-of-additively-manufactured-polyamides/.
-The note tests SLS PA12 dog-bone coupons at 25 Hz and R=0.1. The reported PA12 25 MPa specimens ran out at 10^7 cycles; failures used to fit the trendline span 30–40 MPa. Current modeled root stress is below the tested range, so code records >=10^7 cycles as a provisional monotonic/runout-based lower-bound projection only. It does not claim exact cycles to failure. The gear temperature is much higher than the coupon test condition and no correction is available. This S-N data does not assess flank contact fatigue.
-
+ONLINE SOURCES
+- TA Instruments EF037, PA12 tensile fatigue: https://www.tainstruments.com/pdf/literature/EF037.pdf
+  SLS PA12 dog-bones, R = 0.1, 25 Hz; 25 MPa ran out at 1e7. Used only as a root screen.
+- Odrobina thesis, PA12/PA12 dry gear wear: https://phd.mater.uni-mate.hu/409/11/odrobina_miklos_thesis_DOI.pdf
+- SLS PA12 gear tooth bending fatigue, DOI 10.1177/14644207221074902: not located yet, not used.
