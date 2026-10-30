@@ -68,20 +68,63 @@ D_q = N_q*mod;                           % [mm]
 N_p_planets = 3;
 
 
+
 %% ========================================
-%          MATERIAL / DURABILITY
+%          MATERIAL / STATIC STRENGTH
 % ========================================
 
-T_ambient = 25;                          % [deg C]
+T_ambient = 25;  % [deg C]
 
-sigma_tensile_XY = 48e6;                 % [Pa]
-sigma_tensile_Z = 48e6;                  % [Pa]
+%% MATERIAL PROPERTIES
 
-sigma_flex_XY = 65e6;                    % [Pa]
-sigma_flex_Z = 70e6;                     % [Pa]
+% ============================================================
+% PA12 - HP High Reusability PA12, MJF
+% Provisional values; verify against the exact material datasheet.
+% ============================================================
 
-E_XY = 1700e6;                            % [Pa]
-E_Z = 1800e6;                             % [Pa]
+PA12.E_XY = 1.7e9;                 % Young's modulus, XY plane [Pa]
+PA12.E_Z  = 1.8e9;                 % Young's modulus, Z direction [Pa]
+PA12.nu   = 0.47;                  % Poisson's ratio [-]
+
+PA12.tensile_strength_XY = 48e6;   % Tensile strength, XY [Pa]
+PA12.tensile_strength_Z  = 48e6;   % Tensile strength, Z [Pa]
+
+PA12.flexural_strength_XY = 65e6;  % Flexural strength, XY [Pa]
+PA12.flexural_strength_Z  = 70e6;  % Flexural strength, Z [Pa]
+
+PA12.HDT_182 = 95;                 % Heat deflection temperature at 1.82 MPa [°C]
+PA12.HDT_045 = 175;                % Heat deflection temperature at 0.45 MPa [°C]
+
+% Select the effective modulus for the current gear orientation.
+% This assumes XY properties for the current preliminary model.
+PA12.E = PA12.E_XY;
+
+% Preliminary static root-strength reference.
+% Flexural strength is a screening reference, not a validated
+% allowable gear-tooth root stress.
+PA12.flexural_strength = PA12.flexural_strength_XY;
+
+% Tensile strength retained as a separate material property.
+PA12.tensile_strength = PA12.tensile_strength_XY;
+
+
+% ============================================================
+% STAINLESS STEEL - PLANETS
+% Fill in strength properties once the exact grade is known.
+% ============================================================
+
+steel.E = 193e9;                   % Approximate Young's modulus [Pa]
+steel.nu = 0.30;                   % Approximate Poisson's ratio [-]
+
+steel.sigma_y = 205e6;               % Yield strength [Pa] - FILL IN
+steel.sigma_u = 515e6;               % Ultimate tensile strength [Pa] - FILL IN
+steel.sigma_F = NaN;               % Allowable tooth-root bending stress [Pa]
+                                   % FILL IN if a justified value is available
+
+% Optional: record the grade once identified.
+steel.grade = 'FILL IN';
+
+
 
 % Provisional PA12 fatigue screening data from TA Instruments EF037.
 % All PA12 tensile coupons ran out at 25 MPa through 1e7 cycles. Project
@@ -123,30 +166,32 @@ gear.N_p_planets = N_p_planets;
 
 
 % Planet
-
 gear.N_p = N_p;
-gear.E_p = E_XY;
-gear.b_p = 10;                           % [mm]
-gear.nu_p = 0.47;
 gear.x_p = 0.15;                        % [module], positive profile shift
+gear.E_p = steel.E;
+gear.nu_p = steel.nu;
+gear.sigma_y_p_Pa = steel.sigma_y;
 
 
 % Sun
-
 gear.N_s = N_s;
-gear.b_s = 10;                           % [mm]
-gear.E_s = E_XY;
-gear.nu_s = 0.47;
 gear.x_s = 0.40;                        % [module], x_s+x_p=0.55
+gear.E_s = PA12.E;
+gear.nu_s = PA12.nu;
+gear.sigma_F_s_PA12_Pa = PA12.flexural_strength_XY;
+gear.b_s = 10;  % [mm] Sun face width
+gear.b_p = 10;  % [mm] Planet face width
 
 
 % Inner ring
 
 gear.N_r1_i = N_r1_i;
 gear.b_r1 = 10;                          % [mm]
-gear.E_r = E_XY;
-gear.nu_r1 = 0.47;
 gear.x_r1 = 0.70;                       % [module], x_r-x_p=0.55
+gear.E_r = PA12.E;
+gear.nu_r1 = PA12.nu;
+gear.sigma_F_r_PA12_Pa = PA12.flexural_strength_XY;
+gear.b_r1 = 10; % [mm] Inner-ring face width
 
 
 % Other gears
@@ -349,8 +394,10 @@ temp_results_c = gear_temperature( ...
     ED, ...
     k_theta_flank);
 
-safety_results_c = gear_safety(vdi_results_c,gear,temp_results_c.T_max, ...
-    sigma_flex_XY,sigma_tensile_XY,vdi_results_c.lambda_zul,fatigue_data);
+safety_results_c = gear_safety( ...
+    vdi_results_c, gear, temp_results_c.T_max, ...
+    PA12.flexural_strength_XY, PA12.tensile_strength_XY, ...
+    vdi_results_c.lambda_zul, fatigue_data);
 
 
 %% ========================================
@@ -409,8 +456,10 @@ temp_results_o = gear_temperature( ...
     ED, ...
     k_theta_flank);
 
-safety_results_o = gear_safety(vdi_results_o,gear,temp_results_o.T_max, ...
-    sigma_flex_XY,sigma_tensile_XY,vdi_results_o.lambda_zul,fatigue_data);
+safety_results_o = gear_safety( ...
+    vdi_results_o, gear, temp_results_o.T_max, ...
+    PA12.flexural_strength_XY, PA12.tensile_strength_XY, ...
+    vdi_results_o.lambda_zul, fatigue_data);
 
 % VDI 2736 Blatt 2 average-wear life estimate (Eqs. 19 and 21).
 % Provisional midpoint k_w from microscopy-derived SLS PA12/PA12 dry-gear
